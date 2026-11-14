@@ -1392,7 +1392,7 @@ function buildQuestions(L){
   }else{
     const bank=GRAMMAR[L.gid]||[];
     sample(bank,10).forEach(q=>{
-      if(q.t==="mc")qs.push({t:"mc",kind:"grammar",prompt:q.q,big:"",opts:q.o,ans:q.o[q.a],note:q.note});
+      if(q.t==="mc")qs.push({t:"mc",kind:"grammar",prompt:q.q,big:"",opts:shuffle(q.o.slice()),ans:q.o[q.a],note:q.note});
       else qs.push(q);
     });
   }
@@ -1423,8 +1423,9 @@ function renderQ(){
     area.innerHTML='<div class="sub">'+esc(q.prompt)+(q.speak?speakBtn(q.speak,"ja-JP"):"")+'</div><div class="big">'+esc(q.big)+'</div>'+(q.sub?'<div class="sub">'+esc(q.sub)+'</div>':"")+'<div id="opts">'+q.opts.map((o,i)=>'<button class="opt" data-i="'+i+'">'+esc(o)+'</button>').join("")+'</div>';
     area.querySelectorAll(".opt").forEach(b=>b.addEventListener("click",()=>answerMC(b,q)));
   }else if(q.t==="fill"){
-    area.innerHTML='<div class="sub">Lengkapi kalimat ini:</div><div class="big" style="font-size:24px">'+esc(q.s)+'</div><div id="opts">'+q.o.map((o,i)=>'<button class="opt" data-i="'+i+'">'+esc(o)+'</button>').join("")+'</div>';
-    area.querySelectorAll(".opt").forEach(b=>b.addEventListener("click",()=>answerMC(b,{opts:q.o,ans:q.o[q.a],note:q.note})));
+    const fo=shuffle(q.o.slice());
+    area.innerHTML='<div class="sub">Lengkapi kalimat ini:</div><div class="big" style="font-size:24px">'+esc(q.s)+'</div><div id="opts">'+fo.map((o,i)=>'<button class="opt" data-i="'+i+'">'+esc(o)+'</button>').join("")+'</div>';
+    area.querySelectorAll(".opt").forEach(b=>b.addEventListener("click",()=>answerMC(b,{opts:fo,ans:q.o[q.a],note:q.note})));
   }else if(q.t==="arrange"){
     const toks=shuffle(q.w);
     area.innerHTML='<div class="sub">Susun kata-kata ini menjadi kalimat yang benar:</div><div class="arrangebox" id="abox"></div><div id="tokpool" style="display:flex;flex-wrap:wrap;gap:8px">'+toks.map((t,i)=>'<button class="tok" data-t="'+esc(t)+'">'+esc(t)+'</button>').join("")+'</div><div style="height:10px"></div><button class="btn btn-primary" id="checkArrange">Periksa</button>';
