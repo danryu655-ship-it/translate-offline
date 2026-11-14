@@ -3,7 +3,9 @@
     <!-- Tidak ada izin INTERNET: aplikasi 100% offline -->
     <application
         android:allowBackup="true"
-        android:label="Translate &amp; Belajar"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:label="Nihongo Santai"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <activity
             android:name=".MainActivity"

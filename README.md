@@ -1,4 +1,4 @@
-# Translate & Belajar — Offline
+# Nihongo Santai — Translate & Belajar Offline
 
 Aplikasi Android **offline** (tanpa internet sama sekali) untuk menerjemahkan dan
 belajar bahasa Jepang, Indonesia, dan Inggris. Dibuat untuk Nihongo Santai
@@ -49,7 +49,7 @@ android/                        # proyek Android (WebView wrapper)
 1. Salin file `translate-offline-debug.apk` (hasil build, lihat di bawah) ke HP Android.
 2. Di HP: izinkan "Install aplikasi tak dikenal" untuk aplikasi yang membuka
    file APK (misalnya Files / Chrome) — hanya untuk install ini.
-3. Ketuk file APK → Install. Aplikasi **Translate & Belajar** muncul di layar utama.
+3. Ketuk file APK → Install. Aplikasi **Nihongo Santai** muncul di layar utama.
 4. Setelah itu aplikasi jalan **tanpa internet** (mode pesawat pun bisa).
 
 APK ini adalah build **debug** (tidak ditandatangani rilis) — cukup untuk
@@ -70,7 +70,7 @@ gradle :app:assembleDebug
 Hasil: `android/app/build/outputs/apk/debug/app-debug.apk`.
 
 **Build terverifikasi 14 Nov 2026:** APK debug 33.336 byte, package
-`com.danryu.translateoffline` v1.0, label "Translate & Belajar",
+`com.danryu.translateoffline` v1.1, label "Nihongo Santai",
 `assets/index.html` di dalam APK identik dengan `app/index.html`
 (SHA256 APK: `3840b3d29b460e5a9772af2b74233f4fe98531e09fe87887a6399947a8aced77`).
 
