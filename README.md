@@ -69,6 +69,11 @@ gradle :app:assembleDebug
 
 Hasil: `android/app/build/outputs/apk/debug/app-debug.apk`.
 
+**Build terverifikasi 14 Nov 2026:** APK debug 33.336 byte, package
+`com.danryu.translateoffline` v1.0, label "Translate & Belajar",
+`assets/index.html` di dalam APK identik dengan `app/index.html`
+(SHA256 APK: `3840b3d29b460e5a9772af2b74233f4fe98531e09fe87887a6399947a8aced77`).
+
 Setiap mengubah `app/index.html`, salin lagi ke
 `android/app/src/main/assets/index.html` sebelum build.
 
