@@ -91,6 +91,17 @@ button{font-family:inherit;cursor:pointer}
 .levelbar i{display:block;height:100%;background:var(--amber)}
 .speak{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font-size:13px;margin-left:8px}
 .hidden{display:none!important}
+.lvlgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.lvlcard{border:1.5px solid var(--line);border-radius:14px;padding:10px 6px;text-align:center;background:#fff}
+.lvlcard.locked{opacity:.6}
+.lvlcard.done{border-color:var(--green);background:#f0fdf4}
+.lvlcard .bar{height:8px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin:8px 0 4px}
+.lvlcard .bar i{display:block;height:100%;background:var(--indigo);border-radius:999px}
+.lvlcard.done .bar i{background:var(--green)}
+.lvlcard small{color:var(--muted);font-size:11px}
+.lvlbadge{color:var(--green);font-weight:700;font-size:12px;margin-top:2px}
+.lvlhead{font-size:13px;font-weight:800;letter-spacing:.04em;color:var(--indigo2);margin:16px 0 8px;text-transform:uppercase}
+
 .brand{display:flex;align-items:center;gap:12px}
 .brand .logo{flex:0 0 44px;width:44px;height:44px;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.25)}
 .brand .logo img{width:100%;height:100%;object-fit:cover;display:block}
@@ -136,6 +147,7 @@ button{font-family:inherit;cursor:pointer}
         <button class="btn-swap" id="swapBtn" title="Tukar bahasa">⇄</button>
         <div><label>Ke</label><select id="dstLang"></select></div>
       </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:10px"><span id="netChip" class="note">⚪ Mengecek koneksi…</span><button class="mini" id="forceOffBtn" style="margin-left:auto">Paksa offline</button></div>
       <div style="height:10px"></div>
       <label for="inputText">Tulis kata atau kalimat</label>
       <textarea id="inputText" placeholder="Contoh: ありがとう / arigatou / terima kasih / thank you"></textarea>
@@ -157,7 +169,7 @@ button{font-family:inherit;cursor:pointer}
       <div id="favOut" style="margin-top:8px"><p class="note">Ketuk ⭐ pada sebuah kata untuk menyimpan.</p></div>
     </div>
     <div class="card">
-      <p class="note">ℹ️ <b>Jujur dulu:</b> aplikasi ini menerjemahkan dari <b>kamus dan buku frasa bawaan</b> (±200 kata + ±50 frasa), bukan mesin neural. Kata dan frasa umum diterjemahkan dengan benar; kalimat bebas yang panjang mungkin hanya diterjemahkan kata per kata. Semua data tersimpan di dalam aplikasi — <b>tanpa internet sama sekali</b>.</p>
+      <p class="note">ℹ️ <b>Jujur dulu:</b> aplikasi ini punya DUA mode terjemah. <b>Mode online</b> (🟢) memakai Google Translate — kalimat panjang diterjemahkan utuh, tapi teks yang kamu tulis <b>dikirim ke Google</b>. <b>Mode offline</b> (⚪) menerjemahkan dari <b>kamus dan buku frasa bawaan</b> (±489 kata + ±50 frasa) tanpa internet sama sekali; kalimat bebas yang panjang mungkin hanya diterjemahkan kata per kata. Kalau tidak ada internet atau Google tidak bisa dijangkau, aplikasi otomatis kembali ke kamus bawaan.</p>
     </div>
   </section>
 
@@ -166,8 +178,9 @@ button{font-family:inherit;cursor:pointer}
     <div id="learnHome">
       <div class="card">
         <div class="row"><div><b>Level <span id="lvlNum">1</span></b><div class="levelbar" style="margin-top:6px"><i id="lvlBar" style="width:0%"></i></div></div><div style="flex:0 0 auto;text-align:right"><span id="lvlXpText" class="note">0 / 100 XP</span></div></div>
-        <p class="note" style="margin-top:8px">Selesaikan pelajaran berurutan untuk membuka yang berikutnya. Tiap pelajaran 10 soal, 3 hati ❤️ — hati habis berarti pelajaran gagal dan bisa diulang. Jawaban benar = +10 XP, pelajaran sempurna = bonus +20 XP.</p>
+        <p class="note" style="margin-top:8px">Belajar dari N5 sampai N1. Selesaikan pelajaran berurutan untuk membuka yang berikutnya — level N4 terbuka setelah N5 selesai semua, dan seterusnya. Tiap pelajaran 10 soal, 3 hati ❤️ — hati habis berarti pelajaran gagal dan bisa diulang. Jawaban benar = +10 XP, pelajaran sempurna = bonus +20 XP.</p>
       </div>
+      <div id="levelCards" style="margin-bottom:12px"></div>
       <div id="lessonList"></div>
       <div class="card">
         <p class="note">ℹ️ <b>Yang tidak ada di aplikasi ini:</b> penilaian pengucapan suara dan papan peringkat (leaderboard) — keduanya butuh server dan internet, jadi tidak mungkin offline. Tombol 🔊 memakai suara bawaan perangkat (Web Speech API) kalau tersedia; kalau tidak ada, tombolnya diam-diam tidak muncul.</p>
@@ -421,9 +434,289 @@ const DICT = [
 {j:"映画",k:"えいが",r:"eiga",i:"film",e:"movie",c:"benda"},
 {j:"音楽",k:"おんがく",r:"ongaku",i:"musik",e:"music",c:"benda"},
 {j:"歌",k:"うた",r:"uta",i:"lagu",e:"song",c:"benda"},
-{j:"仕事",k:"しごと",r:"shigoto",i:"pekerjaan",e:"work / job",c:"benda"}
+{j:"仕事",k:"しごと",r:"shigoto",i:"pekerjaan",e:"work / job",c:"benda"},
+{j:"借りる",k:"かりる",r:"kariru",i:"meminjam",e:"to borrow",c:"n4"},
+{j:"貸す",k:"かす",r:"kasu",i:"meminjamkan",e:"to lend",c:"n4"},
+{j:"送る",k:"おくる",r:"okuru",i:"mengirim",e:"to send",c:"n4"},
+{j:"受け取る",k:"うけとる",r:"uketoru",i:"menerima",e:"to receive",c:"n4"},
+{j:"始める",k:"はじめる",r:"hajimeru",i:"memulai",e:"to start",c:"n4"},
+{j:"終わる",k:"おわる",r:"owaru",i:"berakhir",e:"to finish",c:"n4"},
+{j:"決める",k:"きめる",r:"kimeru",i:"memutuskan",e:"to decide",c:"n4"},
+{j:"選ぶ",k:"えらぶ",r:"erabu",i:"memilih",e:"to choose",c:"n4"},
+{j:"探す",k:"さがす",r:"sagasu",i:"mencari",e:"to look for",c:"n4"},
+{j:"見つける",k:"みつける",r:"mitsukeru",i:"menemukan",e:"to find",c:"n4"},
+{j:"覚える",k:"おぼえる",r:"oboeru",i:"mengingat",e:"to remember",c:"n4"},
+{j:"習う",k:"ならう",r:"narau",i:"belajar (dari guru)",e:"to learn",c:"n4"},
+{j:"歌う",k:"うたう",r:"utau",i:"menyanyi",e:"to sing",c:"n4"},
+{j:"踊る",k:"おどる",r:"odoru",i:"menari",e:"to dance",c:"n4"},
+{j:"笑う",k:"わらう",r:"warau",i:"tertawa",e:"to laugh",c:"n4"},
+{j:"泣く",k:"なく",r:"naku",i:"menangis",e:"to cry",c:"n4"},
+{j:"怒る",k:"おこる",r:"okoru",i:"marah",e:"to get angry",c:"n4"},
+{j:"降りる",k:"おりる",r:"oriru",i:"turun",e:"to get off",c:"n4"},
+{j:"乗る",k:"のる",r:"noru",i:"naik",e:"to ride",c:"n4"},
+{j:"泊まる",k:"とまる",r:"tomaru",i:"menginap",e:"to stay overnight",c:"n4"},
+{j:"旅行する",k:"りょこうする",r:"ryokou suru",i:"berwisata",e:"to travel",c:"n4"},
+{j:"運転する",k:"うんてんする",r:"unten suru",i:"mengemudi",e:"to drive",c:"n4"},
+{j:"掃除する",k:"そうじする",r:"souji suru",i:"membersihkan",e:"to clean",c:"n4"},
+{j:"洗濯する",k:"せんたくする",r:"sentaku suru",i:"mencuci pakaian",e:"to do laundry",c:"n4"},
+{j:"料理する",k:"りょうりする",r:"ryouri suru",i:"memasak",e:"to cook",c:"n4"},
+{j:"練習する",k:"れんしゅうする",r:"renshuu suru",i:"berlatih",e:"to practice",c:"n4"},
+{j:"結婚する",k:"けっこんする",r:"kekkon suru",i:"menikah",e:"to marry",c:"n4"},
+{j:"引っ越す",k:"ひっこす",r:"hikkosu",i:"pindah rumah",e:"to move house",c:"n4"},
+{j:"参加する",k:"さんかする",r:"sanka suru",i:"ikut serta",e:"to participate",c:"n4"},
+{j:"連絡する",k:"れんらくする",r:"renraku suru",i:"menghubungi",e:"to contact",c:"n4"},
+{j:"約束する",k:"やくそくする",r:"yakusoku suru",i:"berjanji",e:"to promise",c:"n4"},
+{j:"心配する",k:"しんぱいする",r:"shinpai suru",i:"khawatir",e:"to worry",c:"n4"},
+{j:"安心する",k:"あんしんする",r:"anshin suru",i:"lega",e:"to feel relieved",c:"n4"},
+{j:"注意する",k:"ちゅういする",r:"chuui suru",i:"berhati-hati",e:"to be careful",c:"n4"},
+{j:"遅れる",k:"おくれる",r:"okureru",i:"terlambat",e:"to be late",c:"n4"},
+{j:"間に合う",k:"まにあう",r:"maniau",i:"tepat waktu",e:"to be in time",c:"n4"},
+{j:"急ぐ",k:"いそぐ",r:"isogu",i:"buru-buru",e:"to hurry",c:"n4"},
+{j:"休む",k:"やすむ",r:"yasumu",i:"beristirahat",e:"to rest",c:"n4"},
+{j:"並ぶ",k:"ならぶ",r:"narabu",i:"berbaris",e:"to line up",c:"n4"},
+{j:"直す",k:"なおす",r:"naosu",i:"memperbaiki",e:"to fix",c:"n4"},
+{j:"明るい",k:"あかるい",r:"akarui",i:"terang",e:"bright",c:"n4"},
+{j:"暗い",k:"くらい",r:"kurai",i:"gelap",e:"dark",c:"n4"},
+{j:"重い",k:"おもい",r:"omoi",i:"berat",e:"heavy",c:"n4"},
+{j:"軽い",k:"かるい",r:"karui",i:"ringan",e:"light",c:"n4"},
+{j:"強い",k:"つよい",r:"tsuyoi",i:"kuat",e:"strong",c:"n4"},
+{j:"弱い",k:"よわい",r:"yowai",i:"lemah",e:"weak",c:"n4"},
+{j:"広い",k:"ひろい",r:"hiroi",i:"luas",e:"wide",c:"n4"},
+{j:"狭い",k:"せまい",r:"semai",i:"sempit",e:"narrow",c:"n4"},
+{j:"低い",k:"ひくい",r:"hikui",i:"rendah",e:"low",c:"n4"},
+{j:"深い",k:"ふかい",r:"fukai",i:"dalam",e:"deep",c:"n4"},
+{j:"甘い",k:"あまい",r:"amai",i:"manis",e:"sweet",c:"n4"},
+{j:"辛い",k:"からい",r:"karai",i:"pedas",e:"spicy",c:"n4"},
+{j:"苦い",k:"にがい",r:"nigai",i:"pahit",e:"bitter",c:"n4"},
+{j:"酸っぱい",k:"すっぱい",r:"suppai",i:"asam",e:"sour",c:"n4"},
+{j:"冷たい",k:"つめたい",r:"tsumetai",i:"dingin (benda)",e:"cold (to touch)",c:"n4"},
+{j:"温かい",k:"あたたかい",r:"atatakai",i:"hangat",e:"warm",c:"n4"},
+{j:"熱い",k:"あつい",r:"atsui",i:"panas (benda)",e:"hot (to touch)",c:"n4"},
+{j:"安全な",k:"あんぜんな",r:"anzenna",i:"aman",e:"safe",c:"n4"},
+{j:"危険な",k:"きけんな",r:"kikenna",i:"berbahaya",e:"dangerous",c:"n4"},
+{j:"便利な",k:"べんりな",r:"benrina",i:"praktis",e:"convenient",c:"n4"},
+{j:"旅行",k:"りょこう",r:"ryokou",i:"perjalanan",e:"travel",c:"n4"},
+{j:"地下鉄",k:"ちかてつ",r:"chikatetsu",i:"kereta bawah tanah",e:"subway",c:"n4"},
+{j:"新幹線",k:"しんかんせん",r:"shinkansen",i:"Shinkansen",e:"bullet train",c:"n4"},
+{j:"信号",k:"しんごう",r:"shingou",i:"lampu lalu lintas",e:"traffic light",c:"n4"},
+{j:"交差点",k:"こうさてん",r:"kousaten",i:"persimpangan",e:"intersection",c:"n4"},
+{j:"角",k:"かど",r:"kado",i:"sudut (jalan)",e:"corner",c:"n4"},
+{j:"橋",k:"はし",r:"hashi",i:"jembatan",e:"bridge",c:"n4"},
+{j:"公園",k:"こうえん",r:"kouen",i:"taman",e:"park",c:"n4"},
+{j:"図書館",k:"としょかん",r:"toshokan",i:"perpustakaan",e:"library",c:"n4"},
+{j:"郵便局",k:"ゆうびんきょく",r:"yuubinkyoku",i:"kantor pos",e:"post office",c:"n4"},
+{j:"美術館",k:"びじゅつかん",r:"bijutsukan",i:"museum seni",e:"art museum",c:"n4"},
+{j:"映画館",k:"えいがかん",r:"eigakan",i:"bioskop",e:"cinema",c:"n4"},
+{j:"駐車場",k:"ちゅうしゃじょう",r:"chuushajou",i:"tempat parkir",e:"parking lot",c:"n4"},
+{j:"誕生日",k:"たんじょうび",r:"tanjoubi",i:"hari ulang tahun",e:"birthday",c:"n4"},
+{j:"季節",k:"きせつ",r:"kisetsu",i:"musim",e:"season",c:"n4"},
+{j:"春",k:"はる",r:"haru",i:"musim semi",e:"spring",c:"n4"},
+{j:"夏",k:"なつ",r:"natsu",i:"musim panas",e:"summer",c:"n4"},
+{j:"秋",k:"あき",r:"aki",i:"musim gugur",e:"autumn",c:"n4"},
+{j:"冬",k:"ふゆ",r:"fuyu",i:"musim dingin",e:"winter",c:"n4"},
+{j:"桜",k:"さくら",r:"sakura",i:"bunga sakura",e:"cherry blossom",c:"n4"},
+{j:"雲",k:"くも",r:"kumo",i:"awan",e:"cloud",c:"n4"},
+{j:"風",k:"かぜ",r:"kaze",i:"angin",e:"wind",c:"n4"},
+{j:"島",k:"しま",r:"shima",i:"pulau",e:"island",c:"n4"},
+{j:"町",k:"まち",r:"machi",i:"kota",e:"town",c:"n4"},
+{j:"村",k:"むら",r:"mura",i:"desa",e:"village",c:"n4"},
+{j:"言葉",k:"ことば",r:"kotoba",i:"kata / bahasa",e:"word / language",c:"n4"},
+{j:"意味",k:"いみ",r:"imi",i:"arti",e:"meaning",c:"n4"},
+{j:"質問",k:"しつもん",r:"shitsumon",i:"pertanyaan",e:"question",c:"n4"},
+{j:"答え",k:"こたえ",r:"kotae",i:"jawaban",e:"answer",c:"n4"},
+{j:"問題",k:"もんだい",r:"mondai",i:"soal / masalah",e:"problem",c:"n4"},
+{j:"試験",k:"しけん",r:"shiken",i:"ujian",e:"exam",c:"n4"},
+{j:"宿題",k:"しゅくだい",r:"shukudai",i:"PR",e:"homework",c:"n4"},
+{j:"授業",k:"じゅぎょう",r:"jugyou",i:"pelajaran (kelas)",e:"class",c:"n4"},
+{j:"先生",k:"せんせい",r:"sensei",i:"guru",e:"teacher",c:"n4"},
+{j:"学生",k:"がくせい",r:"gakusei",i:"mahasiswa",e:"student",c:"n4"},
+{j:"日本語",k:"にほんご",r:"nihongo",i:"bahasa Jepang",e:"Japanese language",c:"n4"},
+{j:"歴史",k:"れきし",r:"rekishi",i:"sejarah",e:"history",c:"n4"},
+{j:"文化",k:"ぶんか",r:"bunka",i:"budaya",e:"culture",c:"n4"},
+{j:"電気",k:"でんき",r:"denki",i:"listrik",e:"electricity",c:"n4"},
+{j:"気持ち",k:"きもち",r:"kimochi",i:"perasaan",e:"feeling",c:"n4"},
+{j:"努力",k:"どりょく",r:"doryoku",i:"usaha",e:"effort",c:"n3"},
+{j:"成功",k:"せいこう",r:"seikou",i:"keberhasilan",e:"success",c:"n3"},
+{j:"失敗",k:"しっぱい",r:"shippai",i:"kegagalan",e:"failure",c:"n3"},
+{j:"経験",k:"けいけん",r:"keiken",i:"pengalaman",e:"experience",c:"n3"},
+{j:"能力",k:"のうりょく",r:"nouryoku",i:"kemampuan",e:"ability",c:"n3"},
+{j:"性格",k:"せいかく",r:"seikaku",i:"sifat",e:"character",c:"n3"},
+{j:"気分",k:"きぶん",r:"kibun",i:"suasana hati",e:"mood",c:"n3"},
+{j:"予定",k:"よてい",r:"yotei",i:"rencana",e:"schedule",c:"n3"},
+{j:"計画",k:"けいかく",r:"keikaku",i:"rencana",e:"plan",c:"n3"},
+{j:"準備",k:"じゅんび",r:"junbi",i:"persiapan",e:"preparation",c:"n3"},
+{j:"会議",k:"かいぎ",r:"kaigi",i:"rapat",e:"meeting",c:"n3"},
+{j:"報告",k:"ほうこく",r:"houkoku",i:"laporan",e:"report",c:"n3"},
+{j:"相談",k:"そうだん",r:"soudan",i:"konsultasi",e:"consultation",c:"n3"},
+{j:"賛成",k:"さんせい",r:"sansei",i:"setuju",e:"agreement",c:"n3"},
+{j:"反対",k:"はんたい",r:"hantai",i:"menentang",e:"opposition",c:"n3"},
+{j:"原因",k:"げんいん",r:"genin",i:"penyebab",e:"cause",c:"n3"},
+{j:"結果",k:"けっか",r:"kekka",i:"hasil",e:"result",c:"n3"},
+{j:"影響",k:"えいきょう",r:"eikyou",i:"pengaruh",e:"influence",c:"n3"},
+{j:"関係",k:"かんけい",r:"kankei",i:"hubungan",e:"relation",c:"n3"},
+{j:"違い",k:"ちがい",r:"chigai",i:"perbedaan",e:"difference",c:"n3"},
+{j:"特に",k:"とくに",r:"tokuni",i:"terutama",e:"especially",c:"n3"},
+{j:"実は",k:"じつは",r:"jitsuwa",i:"sebenarnya",e:"actually",c:"n3"},
+{j:"ほとんど",k:"ほとんど",r:"hotondo",i:"hampir",e:"mostly",c:"n3"},
+{j:"急に",k:"きゅうに",r:"kyuuni",i:"tiba-tiba",e:"suddenly",c:"n3"},
+{j:"段々",k:"だんだん",r:"dandan",i:"sedikit demi sedikit",e:"gradually",c:"n3"},
+{j:"もちろん",k:"もちろん",r:"mochiron",i:"tentu saja",e:"of course",c:"n3"},
+{j:"やっと",k:"やっと",r:"yatto",i:"akhirnya",e:"at last",c:"n3"},
+{j:"増える",k:"ふえる",r:"fueru",i:"bertambah",e:"to increase",c:"n3"},
+{j:"減る",k:"へる",r:"heru",i:"berkurang",e:"to decrease",c:"n3"},
+{j:"治る",k:"なおる",r:"naoru",i:"sembuh",e:"to heal",c:"n3"},
+{j:"壊れる",k:"こわれる",r:"kowareru",i:"rusak",e:"to break",c:"n3"},
+{j:"続ける",k:"つづける",r:"tsuzukeru",i:"melanjutkan",e:"to continue",c:"n3"},
+{j:"止める",k:"やめる",r:"yameru",i:"berhenti",e:"to stop",c:"n3"},
+{j:"変わる",k:"かわる",r:"kawaru",i:"berubah",e:"to change",c:"n3"},
+{j:"比べる",k:"くらべる",r:"kuraberu",i:"membandingkan",e:"to compare",c:"n3"},
+{j:"調べる",k:"しらべる",r:"shiraberu",i:"memeriksa",e:"to investigate",c:"n3"},
+{j:"伝える",k:"つたえる",r:"tsutaeru",i:"menyampaikan",e:"to convey",c:"n3"},
+{j:"残る",k:"のこる",r:"nokoru",i:"tersisa",e:"to remain",c:"n3"},
+{j:"残す",k:"のこす",r:"nokosu",i:"menyisakan",e:"to leave behind",c:"n3"},
+{j:"届く",k:"とどく",r:"todoku",i:"sampai",e:"to arrive",c:"n3"},
+{j:"届ける",k:"とどける",r:"todokeru",i:"mengantarkan",e:"to deliver",c:"n3"},
+{j:"慣れる",k:"なれる",r:"nareru",i:"terbiasa",e:"to get used to",c:"n3"},
+{j:"困る",k:"こまる",r:"komaru",i:"kesulitan",e:"to be troubled",c:"n3"},
+{j:"驚く",k:"おどろく",r:"odoroku",i:"terkejut",e:"to be surprised",c:"n3"},
+{j:"喜ぶ",k:"よろこぶ",r:"yorokobu",i:"gembira",e:"to be glad",c:"n3"},
+{j:"悲しむ",k:"かなしむ",r:"kanashimu",i:"bersedih",e:"to be sad",c:"n3"},
+{j:"恥ずかしい",k:"はずかしい",r:"hazukashii",i:"malu",e:"embarrassed",c:"n3"},
+{j:"眠い",k:"ねむい",r:"nemui",i:"mengantuk",e:"sleepy",c:"n3"},
+{j:"熱",k:"ねつ",r:"netsu",i:"demam",e:"fever",c:"n3"},
+{j:"咳",k:"せき",r:"seki",i:"batuk",e:"cough",c:"n3"},
+{j:"健康",k:"けんこう",r:"kenkou",i:"kesehatan",e:"health",c:"n3"},
+{j:"体調",k:"たいちょう",r:"taichou",i:"kondisi tubuh",e:"physical condition",c:"n3"},
+{j:"運動する",k:"うんどうする",r:"undou suru",i:"berolahraga",e:"to exercise",c:"n3"},
+{j:"散歩する",k:"さんぽする",r:"sanpo suru",i:"jalan-jalan",e:"to take a walk",c:"n3"},
+{j:"免許",k:"めんきょ",r:"menkyo",i:"SIM",e:"license",c:"n3"},
+{j:"事故",k:"じこ",r:"jiko",i:"kecelakaan",e:"accident",c:"n3"},
+{j:"渋滞",k:"じゅうたい",r:"juutai",i:"macet",e:"traffic jam",c:"n3"},
+{j:"乗り物",k:"のりもの",r:"norimono",i:"kendaraan",e:"vehicle",c:"n3"},
+{j:"船",k:"ふね",r:"fune",i:"kapal",e:"boat",c:"n3"},
+{j:"港",k:"みなと",r:"minato",i:"pelabuhan",e:"port",c:"n3"},
+{j:"改札",k:"かいさつ",r:"kaisatsu",i:"gerbang tiket",e:"ticket gate",c:"n3"},
+{j:"往復",k:"おうふく",r:"oufuku",i:"pulang-pergi",e:"round trip",c:"n3"},
+{j:"片道",k:"かたみち",r:"katamichi",i:"sekali jalan",e:"one way",c:"n3"},
+{j:"料金",k:"りょうきん",r:"ryoukin",i:"tarif",e:"fare",c:"n3"},
+{j:"割引",k:"わりびき",r:"waribiki",i:"diskon",e:"discount",c:"n3"},
+{j:"無料",k:"むりょう",r:"muryou",i:"gratis",e:"free of charge",c:"n3"},
+{j:"有料",k:"ゆうりょう",r:"yuuryou",i:"berbayar",e:"paid",c:"n3"},
+{j:"猫",k:"ねこ",r:"neko",i:"kucing",e:"cat",c:"n3"},
+{j:"犬",k:"いぬ",r:"inu",i:"anjing",e:"dog",c:"n3"},
+{j:"鳥",k:"とり",r:"tori",i:"burung",e:"bird",c:"n3"},
+{j:"虫",k:"むし",r:"mushi",i:"serangga",e:"insect",c:"n3"},
+{j:"動物",k:"どうぶつ",r:"doubutsu",i:"hewan",e:"animal",c:"n3"},
+{j:"湖",k:"みずうみ",r:"mizuumi",i:"danau",e:"lake",c:"n3"},
+{j:"池",k:"いけ",r:"ike",i:"kolam",e:"pond",c:"n3"},
+{j:"滝",k:"たき",r:"taki",i:"air terjun",e:"waterfall",c:"n3"},
+{j:"海岸",k:"かいがん",r:"kaigan",i:"pantai",e:"coast",c:"n3"},
+{j:"空気",k:"くうき",r:"kuuki",i:"udara",e:"air",c:"n3"},
+{j:"地震",k:"じしん",r:"jishin",i:"gempa bumi",e:"earthquake",c:"n3"},
+{j:"台風",k:"たいふう",r:"taifuu",i:"topan",e:"typhoon",c:"n3"},
+{j:"雷",k:"かみなり",r:"kaminari",i:"petir",e:"thunder",c:"n3"},
+{j:"曖昧",k:"あいまい",r:"aimai",i:"ambigu",e:"ambiguous",c:"n2"},
+{j:"妥協",k:"だきょう",r:"dakyou",i:"kompromi",e:"compromise",c:"n2"},
+{j:"判断",k:"はんだん",r:"handan",i:"penilaian",e:"judgment",c:"n2"},
+{j:"決断",k:"けつだん",r:"ketsudan",i:"keputusan",e:"decision",c:"n2"},
+{j:"覚悟",k:"かくご",r:"kakugo",i:"kesiapan",e:"resolve",c:"n2"},
+{j:"勇気",k:"ゆうき",r:"yuuki",i:"keberanian",e:"courage",c:"n2"},
+{j:"自信",k:"じしん",r:"jishin",i:"kepercayaan diri",e:"confidence",c:"n2"},
+{j:"不安",k:"ふあん",r:"fuan",i:"cemas",e:"anxiety",c:"n2"},
+{j:"期待",k:"きたい",r:"kitai",i:"harapan",e:"expectation",c:"n2"},
+{j:"失望",k:"しつぼう",r:"shitsubou",i:"kekecewaan",e:"disappointment",c:"n2"},
+{j:"感動",k:"かんどう",r:"kandou",i:"terharu",e:"moved",c:"n2"},
+{j:"感謝",k:"かんしゃ",r:"kansha",i:"rasa terima kasih",e:"gratitude",c:"n2"},
+{j:"許す",k:"ゆるす",r:"yurusu",i:"memaafkan",e:"to forgive",c:"n2"},
+{j:"認める",k:"みとめる",r:"mitomeru",i:"mengakui",e:"to admit",c:"n2"},
+{j:"批判する",k:"ひはんする",r:"hihan suru",i:"mengkritik",e:"to criticize",c:"n2"},
+{j:"提案する",k:"ていあんする",r:"teian suru",i:"mengusulkan",e:"to propose",c:"n2"},
+{j:"議論する",k:"ぎろんする",r:"giron suru",i:"berdebat",e:"to discuss",c:"n2"},
+{j:"協力する",k:"きょうりょくする",r:"kyouryoku suru",i:"bekerja sama",e:"to cooperate",c:"n2"},
+{j:"競争する",k:"きょうそうする",r:"kyousou suru",i:"bersaing",e:"to compete",c:"n2"},
+{j:"改善する",k:"かいぜんする",r:"kaizen suru",i:"memperbaiki",e:"to improve",c:"n2"},
+{j:"発展する",k:"はってんする",r:"hatten suru",i:"berkembang",e:"to develop",c:"n2"},
+{j:"拡大する",k:"かくだいする",r:"kakudai suru",i:"memperluas",e:"to expand",c:"n2"},
+{j:"維持する",k:"いじする",r:"iji suru",i:"mempertahankan",e:"to maintain",c:"n2"},
+{j:"管理する",k:"かんりする",r:"kanri suru",i:"mengelola",e:"to manage",c:"n2"},
+{j:"実施する",k:"じっしする",r:"jisshi suru",i:"melaksanakan",e:"to implement",c:"n2"},
+{j:"達成する",k:"たっせいする",r:"tassei suru",i:"mencapai",e:"to achieve",c:"n2"},
+{j:"完成する",k:"かんせいする",r:"kansei suru",i:"selesai",e:"to complete",c:"n2"},
+{j:"開始する",k:"かいしする",r:"kaishi suru",i:"memulai",e:"to start",c:"n2"},
+{j:"終了する",k:"しゅうりょうする",r:"shuuryou suru",i:"mengakhiri",e:"to end",c:"n2"},
+{j:"延期する",k:"えんきする",r:"enki suru",i:"menunda",e:"to postpone",c:"n2"},
+{j:"変更する",k:"へんこうする",r:"henkou suru",i:"mengubah",e:"to change",c:"n2"},
+{j:"追加する",k:"ついかする",r:"tsuika suru",i:"menambahkan",e:"to add",c:"n2"},
+{j:"削除する",k:"さくじょする",r:"sakujo suru",i:"menghapus",e:"to delete",c:"n2"},
+{j:"提出する",k:"ていしゅつする",r:"teishutsu suru",i:"menyerahkan",e:"to submit",c:"n2"},
+{j:"承認する",k:"しょうにんする",r:"shounin suru",i:"menyetujui",e:"to approve",c:"n2"},
+{j:"拒否する",k:"きょひする",r:"kyohi suru",i:"menolak",e:"to refuse",c:"n2"},
+{j:"許可する",k:"きょかする",r:"kyoka suru",i:"mengizinkan",e:"to permit",c:"n2"},
+{j:"禁止する",k:"きんしする",r:"kinshi suru",i:"melarang",e:"to prohibit",c:"n2"},
+{j:"義務",k:"ぎむ",r:"gimu",i:"kewajiban",e:"duty",c:"n2"},
+{j:"権利",k:"けんり",r:"kenri",i:"hak",e:"right",c:"n2"},
+{j:"責任",k:"せきにん",r:"sekinin",i:"tanggung jawab",e:"responsibility",c:"n2"},
+{j:"利益",k:"りえき",r:"rieki",i:"keuntungan",e:"profit",c:"n2"},
+{j:"損失",k:"そんしつ",r:"sonshitsu",i:"kerugian",e:"loss",c:"n2"},
+{j:"収入",k:"しゅうにゅう",r:"shuunyuu",i:"penghasilan",e:"income",c:"n2"},
+{j:"予算",k:"よさん",r:"yosan",i:"anggaran",e:"budget",c:"n2"},
+{j:"価格",k:"かかく",r:"kakaku",i:"harga",e:"price",c:"n2"},
+{j:"価値",k:"かち",r:"kachi",i:"nilai",e:"value",c:"n2"},
+{j:"品質",k:"ひんしつ",r:"hinshitsu",i:"kualitas",e:"quality",c:"n2"},
+{j:"環境",k:"かんきょう",r:"kankyou",i:"lingkungan",e:"environment",c:"n2"},
+{j:"資源",k:"しげん",r:"shigen",i:"sumber daya",e:"resources",c:"n2"},
+{j:"対策",k:"たいさく",r:"taisaku",i:"tindakan",e:"countermeasure",c:"n2"},
+{j:"予防",k:"よぼう",r:"yobou",i:"pencegahan",e:"prevention",c:"n2"},
+{j:"栄養",k:"えいよう",r:"eiyou",i:"nutrisi",e:"nutrition",c:"n2"},
+{j:"睡眠",k:"すいみん",r:"suimin",i:"tidur",e:"sleep",c:"n2"},
+{j:"記憶",k:"きおく",r:"kioku",i:"ingatan",e:"memory",c:"n2"},
+{j:"知識",k:"ちしき",r:"chishiki",i:"pengetahuan",e:"knowledge",c:"n2"},
+{j:"理解",k:"りかい",r:"rikai",i:"pemahaman",e:"understanding",c:"n2"},
+{j:"思考",k:"しこう",r:"shikou",i:"pemikiran",e:"thinking",c:"n2"},
+{j:"想像",k:"そうぞう",r:"souzou",i:"imajinasi",e:"imagination",c:"n2"},
+{j:"発見",k:"はっけん",r:"hakken",i:"penemuan",e:"discovery",c:"n2"},
+{j:"忖度",k:"そんたく",r:"sontaku",i:"mempertimbangkan (perasaan orang lain)",e:"to guess others' feelings",c:"n1"},
+{j:"遂げる",k:"とげる",r:"togeru",i:"mencapai",e:"to accomplish",c:"n1"},
+{j:"惜しむ",k:"おしむ",r:"oshimu",i:"menyayangkan",e:"to regret",c:"n1"},
+{j:"悔やむ",k:"くやむ",r:"kuyamu",i:"menyesal",e:"to regret",c:"n1"},
+{j:"嘆く",k:"なげく",r:"nageku",i:"meratapi",e:"to lament",c:"n1"},
+{j:"憤る",k:"いきどおる",r:"ikidooru",i:"marah",e:"to be indignant",c:"n1"},
+{j:"呆れる",k:"あきれる",r:"akireru",i:"tercengang",e:"to be dumbfounded",c:"n1"},
+{j:"戸惑う",k:"とまどう",r:"tomadou",i:"bingung",e:"to be puzzled",c:"n1"},
+{j:"躊躇する",k:"ちゅうちょする",r:"chuucho suru",i:"ragu-ragu (sangat formal)",e:"to hesitate",c:"n1"},
+{j:"ためらう",k:"ためらう",r:"tamerau",i:"ragu-ragu",e:"to hesitate",c:"n1"},
+{j:"渋る",k:"しぶる",r:"shiburu",i:"enggan",e:"to be reluctant",c:"n1"},
+{j:"強いる",k:"しいる",r:"shiiru",i:"memaksa",e:"to force",c:"n1"},
+{j:"迫る",k:"せまる",r:"semaru",i:"mendesak",e:"to press",c:"n1"},
+{j:"圧倒する",k:"あっとうする",r:"attou suru",i:"menguasai",e:"to overwhelm",c:"n1"},
+{j:"抜群",k:"ばつぐん",r:"batsugun",i:"luar biasa",e:"outstanding",c:"n1"},
+{j:"格別",k:"かくべつ",r:"kakubetsu",i:"istimewa",e:"special",c:"n1"},
+{j:"際立つ",k:"きわだつ",r:"kiwadatsu",i:"menonjol",e:"to stand out",c:"n1"},
+{j:"繊細",k:"せんさい",r:"sensai",i:"halus",e:"delicate",c:"n1"},
+{j:"大胆",k:"だいたん",r:"daitan",i:"berani",e:"bold",c:"n1"},
+{j:"慎重",k:"しんちょう",r:"shinchou",i:"hati-hati",e:"cautious",c:"n1"},
+{j:"軽率",k:"けいそつ",r:"keisotsu",i:"ceroboh",e:"rash",c:"n1"},
+{j:"手際",k:"てぎわ",r:"tegiwa",i:"ketangkasan",e:"skill",c:"n1"},
+{j:"手順",k:"てじゅん",r:"tejun",i:"langkah-langkah (prosedur)",e:"procedure (steps)",c:"n1"},
+{j:"手続き",k:"てつづき",r:"tetsuzuki",i:"prosedur administrasi",e:"administrative procedure",c:"n1"},
+{j:"手がかり",k:"てがかり",r:"tegakari",i:"petunjuk",e:"clue",c:"n1"},
+{j:"取り組む",k:"とりくむ",r:"torikumu",i:"menangani (masalah)",e:"to tackle",c:"n1"},
+{j:"取り上げる",k:"とりあげる",r:"toriageru",i:"mengangkat",e:"to take up",c:"n1"},
+{j:"取り入れる",k:"とりいれる",r:"toriireru",i:"mengadopsi",e:"to adopt",c:"n1"},
+{j:"取り除く",k:"とりのぞく",r:"torinozoku",i:"menyingkirkan",e:"to remove",c:"n1"},
+{j:"取り戻す",k:"とりもどす",r:"torimodosu",i:"merebut kembali",e:"to take back",c:"n1"},
+{j:"取り扱う",k:"とりあつかう",r:"toriatsukau",i:"menangani (barang / layanan)",e:"to handle",c:"n1"},
+{j:"取り替える",k:"とりかえる",r:"torikaeru",i:"mengganti",e:"to replace",c:"n1"},
+{j:"取り敢えず",k:"とりあえず",r:"toriaezu",i:"untuk sementara",e:"for now",c:"n1"},
+{j:"差し支える",k:"さしつかえる",r:"sashitsukaeru",i:"mengganggu",e:"to hinder",c:"n1"},
+{j:"差し出す",k:"さしだす",r:"sashidasu",i:"mengulurkan",e:"to hold out",c:"n1"},
+{j:"差し引く",k:"さしひく",r:"sashihiku",i:"mengurangi",e:"to deduct",c:"n1"},
+{j:"申し上げる",k:"もうしあげる",r:"moushiageru",i:"berkata (hormat)",e:"to say (honorific)",c:"n1"},
+{j:"存じる",k:"ぞんじる",r:"zonjiru",i:"tahu (hormat)",e:"to know (humble)",c:"n1"},
+{j:"伺う",k:"うかがう",r:"ukagau",i:"bertanya / mengunjungi (rendah hati)",e:"to ask / visit (humble)",c:"n1"},
+{j:"拝見する",k:"はいけんする",r:"haiken suru",i:"melihat (rendah hati)",e:"to see (humble)",c:"n1"},
 ];
-const CATS={sapaan:"👋 Sapaan & dasar",angka:"🔢 Angka",waktu:"🕐 Waktu",keluarga:"👨‍👩‍👧 Keluarga",makanan:"🍜 Makanan & minuman",perjalanan:"✈️ Bandara & perjalanan",hotel:"🏨 Hotel",restoran:"🍽️ Restoran",tempat:"📍 Tempat & alam",belanja:"🛍️ Belanja & uang",darurat:"🚨 Darurat & kesehatan",kerja:"🏃 Kata kerja",sifat:"✨ Kata sifat",benda:"📦 Kata benda umum"};
+const CATS={sapaan:"👋 Sapaan & dasar",angka:"🔢 Angka",waktu:"🕐 Waktu",keluarga:"👨‍👩‍👧 Keluarga",makanan:"🍜 Makanan & minuman",perjalanan:"✈️ Bandara & perjalanan",hotel:"🏨 Hotel",restoran:"🍽️ Restoran",tempat:"📍 Tempat & alam",belanja:"🛍️ Belanja & uang",darurat:"🚨 Darurat & kesehatan",kerja:"🏃 Kata kerja",sifat:"✨ Kata sifat",benda:"📦 Kata benda umum",n4:"📘 Kosakata N4",n3:"📗 Kosakata N3",n2:"📙 Kosakata N2",n1:"📕 Kosakata N1"};
 
 /* ================= DATA: FRASA PERJALANAN ================= */
 const PHRASES=[
@@ -530,31 +823,295 @@ g4:[
 {t:"fill",s:"食べる → 食べ ___。",o:["ます","です","でした","する"],a:0,note:"Golongan 2: hapus る, tambah ます. "},
 {t:"fill",s:"書く → 書き ___。",o:["ます","です","でした","する"],a:0,note:"Golongan 1: ubah く → き, tambah ます. "},
 {t:"mc",q:"Golongan 3 (tidak beraturan) isinya…",o:["する dan 来る","行く dan 来る","書く dan 読む","食べる dan 見る"],a:0,note:"する → します, 来る → 来ます (きます). Hanya dua ini. "},
-{t:"arrange",w:["この","映画","は","おもしろい","です"],note:"“おもしろい” = menarik. Kata sifat-i sebelum です."}]
+{t:"arrange",w:["この","映画","は","おもしろい","です"],note:"“おもしろい” = menarik. Kata sifat-i sebelum です."}],
+g5:[
+{t:"mc",q:"Bentuk te dari “書く” adalah?",o:["書いて","書くて","書きて","書いって"],a:0,note:"く → いて: 書く → 書いて。"},
+{t:"mc",q:"Bentuk te dari “読む” adalah?",o:["読んで","読みて","読むて","読んでて"],a:0,note:"む → んで: 読む → 読んで。"},
+{t:"fill",s:"話す → 話___。",o:["して","すて","しって","す"],a:0,note:"す → して: 話す → 話して。"},
+{t:"fill",s:"買う → 買___。",o:["って","いて","うて","いって"],a:0,note:"う → って: 買う → 買って。"},
+{t:"mc",q:"Bentuk te dari “食べる” adalah?",o:["食べて","食べって","食べいて","食べるて"],a:0,note:"Golongan 2: hapus る, tambah て: 食べる → 食べて。"},
+{t:"fill",s:"する → ___。",o:["して","すて","しって","するて"],a:0,note:"する tidak beraturan: する → して。"},
+{t:"fill",s:"来る → ___。",o:["来て","来いて","来って","来るて"],a:0,note:"来る tidak beraturan: 来る → 来て (きて)。"},
+{t:"mc",q:"Bentuk te dari “待つ” adalah?",o:["待って","待ちて","待つて","待いて"],a:0,note:"つ → って: 待つ → 待って。"},
+{t:"arrange",w:["本","を","読んで","ください"],note:"“読んでください” = tolong baca. Pola: Objek を + te + ください。"},
+{t:"mc",q:"Apa arti “ちょっと待ってください”?",o:["Tolong tunggu sebentar","Tolong makan","Tolong pergi","Tolong lihat"],a:0,note:"待ってください = tolong tunggu. ちょっと = sebentar。"}],
+g6:[
+{t:"mc",q:"Bentuk ta (lampau) dari “食べる” adalah?",o:["食べた","食べって","食べいて","食べるた"],a:0,note:"Golongan 2: 食べる → 食べた。"},
+{t:"fill",s:"書く → 書___ (lampau)。",o:["いた","いて","かない","くた"],a:0,note:"書く → 書いた (te-nya 書いて, ta-nya 書いた)。"},
+{t:"mc",q:"Bentuk nai dari “読む” adalah?",o:["読まない","読みない","読むない","読んでない"],a:0,note:"む → まない: 読む → 読まない。"},
+{t:"fill",s:"する → ___ (lampau)。",o:["した","すた","してた","するた"],a:0,note:"する → した。"},
+{t:"fill",s:"来る → ___ (bentuk nai)。",o:["来ない","来らない","来さない","来ないない"],a:0,note:"来る → 来ない (こない)。"},
+{t:"mc",q:"Bentuk ta dari “行く” adalah?",o:["行った","行きった","行くた","行いて"],a:0,note:"行く → 行った (tidak beraturan untuk ta: く → った)。"},
+{t:"arrange",w:["昨日","映画","を","見た"],note:"見た = melihat (lampau). 昨日 = kemarin。"},
+{t:"mc",q:"Kalimat mana yang memakai bentuk nai sopan dengan benar?",o:["今日は学校に行きません。","今日は学校に行きますない。","今日は学校に行くません。","今日は学校に行かません。"],a:0,note:"Bentuk sopan negatif: 行きません (masu negatif)。"},
+{t:"fill",s:"話す → 話___ (lampau)。",o:["した","すた","して","さなかった"],a:0,note:"話す → 話した。"},
+{t:"mc",q:"Apa arti “食べませんでした”?",o:["Tidak makan (lampau, sopan)","Tidak mau makan","Makan kemarin","Akan makan"],a:0,note:"食べませんでした = tidak makan (lampau, sopan)。"}],
+g7:[
+{t:"mc",q:"“食べたい” artinya?",o:["Ingin makan","Sedang makan","Sudah makan","Tidak makan"],a:0,note:"Kata kerja (dasar ます, tanpa ます) + たい = ingin。"},
+{t:"fill",s:"行く → 行き___。",o:["たい","ます","た","ない"],a:0,note:"行く → 行きたい = ingin pergi。"},
+{t:"mc",q:"Bentuk negatif dari “飲みたい” adalah?",o:["飲みたくない","飲みたいない","飲みませんたい","飲みたくありませんでした"],a:0,note:"たい → たくない: 飲みたくない = tidak ingin minum。"},
+{t:"fill",s:"わたしは 日本に 行き___です。",o:["たい","ます","た","ない"],a:0,note:"行きたいです = ingin pergi (sopan)。"},
+{t:"mc",q:"Kalimat mana yang BENAR?",o:["水を飲みたいです。","水を飲みたいます。","水を飲みたいます。","水を飲みたです。"],a:0,note:"“たい” seperti kata sifat-i: 飲みたいです (bukan 飲みたいます)。"},
+{t:"arrange",w:["わたし","は","映画","を","見たい","です"],note:"“見たいです” = ingin menonton。"},
+{t:"mc",q:"“会いたい” artinya?",o:["Ingin bertemu","Ingin pergi","Ingin makan","Ingin tidur"],a:0,note:"会う → 会いたい = ingin bertemu。"},
+{t:"fill",s:"新しい本を 読み___です。",o:["たい","ます","た","ない"],a:0,note:"読みたいです = ingin membaca。"},
+{t:"mc",q:"Apa arti “寝たくない”?",o:["Tidak ingin tidur","Ingin tidur","Sudah tidur","Tidak bisa tidur"],a:0,note:"寝る → 寝たい (ingin tidur) → 寝たくない (tidak ingin tidur)。"},
+{t:"fill",s:"何を 食べ___ですか。",o:["たい","ます","た","ない"],a:0,note:"何を食べたいですか = mau makan apa?"}],
+g8:[
+{t:"mc",q:"“行かなければなりません” artinya?",o:["Harus pergi","Tidak boleh pergi","Boleh pergi","Ingin pergi"],a:0,note:"Bentuk nai + ければなりません = harus。"},
+{t:"fill",s:"食べ___なりません。",o:["なければ","たい","ても","たら"],a:0,note:"食べなければなりません = harus makan。"},
+{t:"mc",q:"Bentuk “harus” dari “する” adalah?",o:["しなければなりません","しなければなりませんです","しなければなりませんます","しなければなりませんた"],a:0,note:"する → しなければなりません。"},
+{t:"fill",s:"明日、学校に 来___なりません。",o:["なければ","たい","ても","たら"],a:0,note:"来なければなりません = harus datang (こなければなりません)。"},
+{t:"mc",q:"“勉強しなければなりません” artinya?",o:["Harus belajar","Tidak boleh belajar","Boleh belajar","Sudah belajar"],a:0,note:"勉強する → 勉強しなければなりません。"},
+{t:"arrange",w:["明日","、","早く","起きなければ","なりません"],note:"“起きなければなりません” = harus bangun。"},
+{t:"mc",q:"Bentuk “harus” dari “読む” adalah?",o:["読まなければなりません","読みなければなりません","読むなければなりません","読んでなければなりません"],a:0,note:"読む → 読まなければなりません。"},
+{t:"fill",s:"薬を 飲ま___なりません。",o:["なければ","たい","ても","たら"],a:0,note:"飲まなければなりません = harus minum (obat)。"},
+{t:"mc",q:"Kalimat mana yang BENAR?",o:["日本語を勉強しなければなりません。","日本語を勉強しなければなりませんです。","日本語を勉強しなければなりませんます。","日本語を勉強しなければなりませんた。"],a:0,note:"“なければなりません” sudah lengkap, tidak ditambah です/ます。"},
+{t:"fill",s:"宿題を し___なりません。",o:["なければ","たい","ても","たら"],a:0,note:"しなければなりません = harus mengerjakan。"}],
+g9:[
+{t:"mc",q:"“食べてもいいです” artinya?",o:["Boleh makan","Tidak boleh makan","Harus makan","Ingin makan"],a:0,note:"te + もいい = boleh。"},
+{t:"fill",s:"ここに 入っ___いけません。",o:["ては","ても","たら","たい"],a:0,note:"入ってはいけません = tidak boleh masuk。"},
+{t:"mc",q:"“行ってもいいです” artinya?",o:["Boleh pergi","Tidak boleh pergi","Harus pergi","Ingin pergi"],a:0,note:"行く → 行って (te) + もいい = boleh pergi。"},
+{t:"fill",s:"この本を 読ん___いいですか。",o:["でも","ては","たら","たい"],a:0,note:"読んでもいいですか = bolehkah saya membaca (buku ini)?"},
+{t:"mc",q:"Bentuk “tidak boleh” dari “飲む” adalah?",o:["飲んではいけません","飲んでもいいです","飲みません","飲んではいけませんです"],a:0,note:"飲む → 飲んで → 飲んではいけません。"},
+{t:"arrange",w:["水","を","飲んでも","いいです"],note:"“飲んでもいいです” = boleh minum。"},
+{t:"mc",q:"Kalimat mana yang berarti “boleh”?",o:["見てもいいです。","見てはいけません。","見なければなりません。","見たいです。"],a:0,note:"てもいい = boleh; てはいけません = tidak boleh; なければなりません = harus; たい = ingin。"},
+{t:"fill",s:"この部屋に 入っ___いいです。",o:["ても","ては","たら","たい"],a:0,note:"入ってもいいです = boleh masuk。"},
+{t:"mc",q:"“食べてはいけません” artinya?",o:["Tidak boleh makan","Boleh makan","Harus makan","Ingin makan"],a:0,note:"te + はいけません = tidak boleh。"},
+{t:"fill",s:"テレビを 見___いいですか。",o:["ても","ては","たら","たい"],a:0,note:"見てもいいですか = bolehkah menonton TV?"}],
+g10:[
+{t:"mc",q:"“雨が降ったら、家にいます” artinya?",o:["Kalau hujan turun, saya di rumah","Saat hujan, saya pergi","Karena hujan, saya sakit","Hujan turun kemarin"],a:0,note:"~たら = kalau / jika。"},
+{t:"mc",q:"Kalimat mana yang memakai “~たら” dengan benar?",o:["雨が降ったら、家にいます。","雨が降るたら、家にいます。","雨が降りたら、家にいます。","雨が降ったら家にいますです。"],a:0,note:"降る → 降ったら (bentuk ta + ら)。"},
+{t:"fill",s:"子どものとき、よく 公園で 遊び___。",o:["ました","ます","たい","たら"],a:0,note:"“子どものとき” = waktu kecil. 遊びました = bermain (lampau)。"},
+{t:"mc",q:"“食べるとき、手を洗います” artinya?",o:["Saat makan, saya mencuci tangan","Kalau makan, saya tidur","Setelah makan, saya pergi","Sebelum makan, saya berdoa"],a:0,note:"~とき = saat / ketika. 食べるとき = saat makan。"},
+{t:"fill",s:"日本に 行ったとき、富士山を 見___。",o:["ました","ます","たい","たら"],a:0,note:"“行ったとき” = saat pergi (lampau). 見ました = melihat (lampau)。"},
+{t:"arrange",w:["暇なとき","、","本","を","読みます"],note:"“暇なとき” = saat senggang. Kata sifat-na + とき。"},
+{t:"mc",q:"Bedanya “~たら” dan “~とき”?",o:["たら = kalau/jika, とき = saat/ketika","たら = saat, とき = kalau","Sama saja","たら = karena, とき = tetapi"],a:0,note:"行ったら = kalau pergi; 行くとき = saat pergi。"},
+{t:"fill",s:"若いとき、よく 泳ぎ___。",o:["ました","ます","たい","たら"],a:0,note:"若いとき = saat muda. 泳ぎました = berenang (lampau)。"},
+{t:"mc",q:"“安かったら、買います” artinya?",o:["Kalau murah, saya beli","Saat murah, saya jual","Karena murah, saya pergi","Murah kemarin"],a:0,note:"安い → 安かったら = kalau murah。"},
+{t:"mc",q:"Kalimat mana yang BENAR?",o:["お金があったら、新しい車を買います。","お金があったら、新しい車を買うたら。","お金があったら、新しい車を買いますです。","お金があったら、新しい車を買いった。"],a:0,note:"あったら = kalau ada (bentuk ta + ら)。"}],
+g11:[
+{t:"mc",q:"“食べてしまった” artinya?",o:["Sudah terlanjur makan (habis)","Sedang makan","Akan makan","Tidak mau makan"],a:0,note:"te + しまう = sudah selesai / terlanjur。"},
+{t:"fill",s:"宿題を 忘れ___しまった。",o:["て","た","ない","ます"],a:0,note:"忘れる → 忘れてしまった = terlanjur lupa。"},
+{t:"mc",q:"“壊れてしまった” artinya?",o:["Tidak sengaja rusak","Sengaja dirusak","Akan rusak","Sedang diperbaiki"],a:0,note:"壊れる → 壊れてしまった = (tidak sengaja) rusak。"},
+{t:"fill",s:"電車に 遅れ___しまった。",o:["て","た","ない","ます"],a:0,note:"遅れる → 遅れてしまった = terlanjur terlambat。"},
+{t:"mc",q:"Kalimat mana yang memakai “~てしまう” dengan benar?",o:["財布を忘れてしまいました。","財布を忘れしてしまいました。","財布を忘れてしまうです。","財布を忘れるてしまいました。"],a:0,note:"忘れる → 忘れて + しまう。"},
+{t:"arrange",w:["もう","全部","食べ","てしまった"],note:"“てしまった” = sudah terlanjur / selesai total。"},
+{t:"mc",q:"“飲んでしまった” artinya?",o:["Sudah terlanjur minum (habis)","Sedang minum","Akan minum","Tidak mau minum"],a:0,note:"飲む → 飲んでしまった。"},
+{t:"fill",s:"ケーキを 全部 食べ___しまった。",o:["て","た","ない","ます"],a:0,note:"食べる → 食べてしまった = sudah habis dimakan。"},
+{t:"mc",q:"Apa nuansa “~てしまう”?",o:["Selesai total / terlanjur / menyesal","Sedang berlangsung","Akan datang","Kebiasaan"],a:0,note:"Contoh: 忘れてしまった (terlanjur lupa, menyesal)。"},
+{t:"fill",s:"傘を 忘れ___しまった。",o:["て","た","ない","ます"],a:0,note:"忘れる → 忘れてしまった。"}],
+g12:[
+{t:"mc",q:"“食べてみる” artinya?",o:["Mencoba makan","Sudah makan","Tidak makan","Makan banyak"],a:0,note:"te + みる = mencoba。"},
+{t:"fill",s:"この料理を 食べ___みてください。",o:["て","た","ない","ます"],a:0,note:"食べてみてください = coba makan ini。"},
+{t:"mc",q:"“行ってみる” artinya?",o:["Mencoba pergi","Sudah pergi","Tidak pergi","Pergi setiap hari"],a:0,note:"行く → 行ってみる = mencoba pergi。"},
+{t:"fill",s:"日本語で 話し___みました。",o:["て","た","ない","ます"],a:0,note:"話す → 話してみました = mencoba berbicara (lampau)。"},
+{t:"mc",q:"Kalimat mana yang BENAR?",o:["新しい店に行ってみました。","新しい店に行ってみるです。","新しい店に行ってみますです。","新しい店に行くてみました。"],a:0,note:"行く → 行ってみました。"},
+{t:"arrange",w:["この","本","を","読んで","みて","ください"],note:"“読んでみてください” = coba baca buku ini。"},
+{t:"mc",q:"“やってみる” artinya?",o:["Mencoba melakukan","Sudah selesai","Tidak bisa","Melakukan setiap hari"],a:0,note:"やる → やってみる = mencoba melakukan。"},
+{t:"fill",s:"一度 着___みてください。",o:["て","た","ない","ます"],a:0,note:"着る → 着てみてください = coba pakai。"},
+{t:"mc",q:"Apa arti “聞いてみる”?",o:["Mencoba bertanya / mendengar","Sudah mendengar","Tidak mendengar","Mendengar setiap hari"],a:0,note:"聞く → 聞いてみる。"},
+{t:"fill",s:"この映画を 見___みたいです。",o:["て","た","ない","ます"],a:0,note:"見てみたいです = ingin mencoba menonton。"}],
+g13:[
+{t:"mc",q:"“雨が降るそうです” artinya?",o:["Katanya akan hujan","Kelihatannya akan hujan","Hujan turun sekarang","Hujan turun kemarin"],a:0,note:"~そうだ (dari kabar) = katanya. Bentuk biasa + そうだ。"},
+{t:"fill",s:"彼は 明日 来る___です。",o:["そう","よう","らしい","ばかり"],a:0,note:"来るそうです = katanya dia datang besok。"},
+{t:"mc",q:"“この料理はおいしいそうです” artinya?",o:["Katanya masakan ini enak","Kelihatannya masakan ini enak","Masakan ini enak sekali","Masakan ini tidak enak"],a:0,note:"おいしい + そうです = katanya enak (dari kabar)。"},
+{t:"fill",s:"明日は 晴れる___です。",o:["そう","よう","らしい","ばかり"],a:0,note:"晴れるそうです = katanya besok cerah。"},
+{t:"mc",q:"Bedanya “おいしいそうです” dan “おいしそうです”?",o:["そうです = katanya (dari kabar), しそうです = kelihatannya","Sama saja","そうです = lampau, しそうです = kini","そうです = sopan, しそうです = kasar"],a:0,note:"おいしいそうです (katanya) vs おいしそうです (kelihatannya enak). Perhatikan “い” yang hilang。"},
+{t:"arrange",w:["明日","は","雨","が","降る","そうです"],note:"“降るそうです” = katanya akan hujan。"},
+{t:"mc",q:"“田中さんは日本に帰るそうです” artinya?",o:["Katanya Tanaka pulang ke Jepang","Kelihatannya Tanaka pulang","Tanaka sudah pulang","Tanaka tidak pulang"],a:0,note:"帰るそうです = katanya pulang。"},
+{t:"fill",s:"その映画は とても おもしろい___です。",o:["そう","よう","らしい","ばかり"],a:0,note:"おもしろいそうです = katanya sangat menarik。"},
+{t:"mc",q:"Kalimat mana yang memakai “~そうだ” (katanya) dengan benar?",o:["明日は雪が降るそうです。","明日は雪が降りそうです。","明日は雪が降るそうだです。","明日は雪が降るそうですです。"],a:0,note:"降るそうです = katanya akan turun salju. “降りそう” = kelihatannya akan turun。"},
+{t:"fill",s:"あの店のラーメンは おいしい___です。",o:["そう","よう","らしい","ばかり"],a:0,note:"おいしいそうです = katanya enak。"}],
+g14:[
+{t:"mc",q:"“雨が降るようです” artinya?",o:["Sepertinya akan hujan","Katanya akan hujan","Hujan turun kemarin","Tidak akan hujan"],a:0,note:"~ようだ = sepertinya (dari pengamatan)。"},
+{t:"fill",s:"彼は 疲れている___です。",o:["よう","そう","らしい","ばかり"],a:0,note:"疲れているようです = sepertinya dia lelah。"},
+{t:"mc",q:"“彼は学生のようです” artinya?",o:["Sepertinya dia mahasiswa","Katanya dia mahasiswa","Dia bukan mahasiswa","Dia guru"],a:0,note:"Kata benda + の + ようだ。"},
+{t:"fill",s:"彼は 来ない___です。",o:["よう","そう","らしい","ばかり"],a:0,note:"来ないようです = sepertinya dia tidak datang。"},
+{t:"mc",q:"Bedanya “~ようだ” dan “~そうだ” (katanya)?",o:["ようだ = dari pengamatan sendiri, そうだ = dari kabar orang","Sama saja","ようだ = lampau, そうだ = kini","ようだ = kasar, そうだ = sopan"],a:0,note:"降るようです (sepertinya, saya lihat mendung) vs 降るそうです (katanya)。"},
+{t:"arrange",w:["あの","人","は","先生","の","ようです"],note:"“先生のようです” = sepertinya guru。"},
+{t:"mc",q:"“元気なようです” artinya?",o:["Sepertinya dia sehat","Katanya dia sehat","Dia sakit","Dia tidak sehat"],a:0,note:"Kata sifat-na + な + ようだ: 元気なようです。"},
+{t:"fill",s:"あの店は とても 人気が ある___です。",o:["よう","そう","らしい","ばかり"],a:0,note:"あるようです = sepertinya ada (populer)。"},
+{t:"mc",q:"Kalimat mana yang memakai “~ようだ” dengan benar?",o:["彼はもう帰ったようです。","彼はもう帰ったそうですよう。","彼はもう帰るようだです。","彼はもう帰ったようそうです。"],a:0,note:"帰ったようです = sepertinya sudah pulang。"},
+{t:"fill",s:"彼女は 日本語が 上手な___です。",o:["よう","そう","らしい","ばかり"],a:0,note:"上手なようです = sepertinya pandai berbahasa Jepang。"}],
+g15:[
+{t:"mc",q:"“学生らしい” artinya?",o:["Khas mahasiswa","Bukan mahasiswa","Mantan mahasiswa","Guru"],a:0,note:"~らしい = khas / seperti layaknya。"},
+{t:"fill",s:"桜が咲いて、春___ですね。",o:["らしい","ようだ","そうだ","ばかり"],a:0,note:"春らしい = khas musim semi。"},
+{t:"mc",q:"“男らしい” artinya?",o:["Khas laki-laki (jantan)","Seperti perempuan","Bukan laki-laki","Anak kecil"],a:0,note:"男らしい = khas laki-laki。"},
+{t:"fill",s:"あの人は とても 子ども___です。",o:["らしい","ようだ","そうだ","ばかり"],a:0,note:"子どもらしい = kekanak-kanakan (khas anak)。"},
+{t:"mc",q:"“日本らしい建物” artinya?",o:["Bangunan yang khas Jepang","Bangunan di Jepang","Bangunan baru","Bangunan tua"],a:0,note:"日本らしい = khas Jepang。"},
+{t:"arrange",w:["彼女","は","女らしい","服","を","着ている"],note:"“女らしい” = khas perempuan (feminin)。"},
+{t:"mc",q:"Bedanya “~らしい” dan “~ようだ”?",o:["らしい = khas/seperti layaknya, ようだ = sepertinya (kesan)","Sama saja","らしい = lampau, ようだ = kini","らしい = sopan, ようだ = kasar"],a:0,note:"学生らしい (khas mahasiswa) vs 学生のようだ (sepertinya mahasiswa)。"},
+{t:"fill",s:"この景色は 本当に 日本___ですね。",o:["らしい","ようだ","そうだ","ばかり"],a:0,note:"日本らしい = khas Jepang。"},
+{t:"mc",q:"“彼は本物らしい” artinya?",o:["Sepertinya dia yang asli","Dia palsu","Dia tidak asli","Dia bukan dia"],a:0,note:"本物らしい = sepertinya asli。"},
+{t:"fill",s:"あの子は まだ 子ども___行動をします。",o:["らしい","ようだ","そうだ","ばかり"],a:0,note:"子どもらしい = khas anak-anak。"}],
+g16:[
+{t:"mc",q:"“食べたばかりです” artinya?",o:["Baru saja makan","Akan makan","Sedang makan","Tidak makan"],a:0,note:"Bentuk ta + ばかり = baru saja。"},
+{t:"fill",s:"日本に 来た___です。",o:["ばかり","ようだ","そうだ","らしい"],a:0,note:"来たばかりです = baru saja datang ke Jepang。"},
+{t:"mc",q:"“今起きたばかりです” artinya?",o:["Baru saja bangun","Akan tidur","Sedang tidur","Tidak tidur"],a:0,note:"起きる → 起きたばかり = baru saja bangun。"},
+{t:"fill",s:"新しい車を 買った___です。",o:["ばかり","ようだ","そうだ","らしい"],a:0,note:"買ったばかり = baru saja membeli。"},
+{t:"mc",q:"Kalimat mana yang BENAR?",o:["ご飯を食べたばかりです。","ご飯を食べるばかりです。","ご飯を食べたばかります。","ご飯を食べてばかりです。"],a:0,note:"Bentuk ta + ばかり。"},
+{t:"arrange",w:["わたし","は","今","、","日本","に","来た","ばかり","です"],note:"“来たばかりです” = baru saja datang。"},
+{t:"mc",q:"“見たばかりの映画” artinya?",o:["Film yang baru saja ditonton","Film yang akan ditonton","Film lama","Film yang tidak ditonton"],a:0,note:"~たばかり + kata benda = yang baru saja …。"},
+{t:"fill",s:"シャワーを 浴びた___です。",o:["ばかり","ようだ","そうだ","らしい"],a:0,note:"浴びたばかり = baru saja mandi (shower)。"},
+{t:"mc",q:"Apa arti “~ばかり”?",o:["Baru saja","Selalu","Tidak pernah","Kadang-kadang"],a:0,note:"Contoh: 食べたばかり (baru saja makan)。"},
+{t:"fill",s:"宿題を 終わった___です。",o:["ばかり","ようだ","そうだ","らしい"],a:0,note:"終わったばかり = baru saja selesai。"}],
+g17:[
+{t:"mc",q:"“疲れているわけだ” artinya?",o:["Tidak heran dia lelah","Dia tidak lelah","Dia akan lelah","Dia pura-pura lelah"],a:0,note:"~わけだ = tidak heran / pantas saja (penjelasan)。"},
+{t:"fill",s:"彼は 毎日 10時間も 働いている。疲れている___だ。",o:["わけ","はず","らしい","ばかり"],a:0,note:"働いているわけだ = pantas saja lelah。"},
+{t:"mc",q:"“だから遅れたわけだ” artinya?",o:["Jadi pantas saja terlambat","Jadi tidak terlambat","Jadi cepat","Jadi tidak pergi"],a:0,note:"わけだ = jadi (begitulah alasannya)。"},
+{t:"fill",s:"昨日は 雪が降っていた。寒い___だ。",o:["わけ","はず","らしい","ばかり"],a:0,note:"寒いわけだ = pantas saja dingin。"},
+{t:"mc",q:"Kalimat mana yang memakai “~わけだ” dengan benar?",o:["彼は日本人だ。だから日本語が上手なわけだ。","彼は日本人だ。だから日本語が上手なはずだわけだ。","彼は日本人だ。だから日本語が上手なわけですです。","彼は日本人だ。だから日本語が上手なわけたい。"],a:0,note:"上手なわけだ = pantas saja pandai。"},
+{t:"arrange",w:["毎日","練習","している","から","、","上手な","わけだ"],note:"“上手なわけだ” = pantas saja pandai。"},
+{t:"mc",q:"“わけがない” artinya?",o:["Tidak mungkin","Pasti","Mungkin","Harus"],a:0,note:"~わけがない = tidak mungkin. Lawan dari ~わけだ。"},
+{t:"fill",s:"彼が 来ない___がない。彼は いつも 来るから。",o:["わけ","はず","らしい","ばかり"],a:0,note:"来ないわけがない = tidak mungkin dia tidak datang。"},
+{t:"mc",q:"Apa arti “~わけだ”?",o:["Pantas saja / jadi (penjelasan)","Mungkin","Harus","Tidak boleh"],a:0,note:"Contoh: 勉強したから、合格したわけだ。"},
+{t:"fill",s:"あの店は いつも 行列が できている。人気が ある___だ。",o:["わけ","はず","らしい","ばかり"],a:0,note:"人気があるわけだ = pantas saja populer。"}],
+g18:[
+{t:"mc",q:"“来るはずだ” artinya?",o:["Seharusnya datang","Tidak akan datang","Sudah datang","Tidak mau datang"],a:0,note:"~はずだ = seharusnya / pasti (harapan)。"},
+{t:"fill",s:"彼は 約束を 守る___だ。",o:["はず","わけ","らしい","ばかり"],a:0,note:"守るはずだ = seharusnya menepati janji。"},
+{t:"mc",q:"“知っているはずだ” artinya?",o:["Seharusnya dia tahu","Dia tidak tahu","Dia tidak mau tahu","Dia lupa"],a:0,note:"知っているはずだ = seharusnya tahu。"},
+{t:"fill",s:"明日は 雨が 降る___だ。",o:["はず","わけ","らしい","ばかり"],a:0,note:"降るはずだ = seharusnya hujan (menurut ramalan)。"},
+{t:"mc",q:"Kalimat mana yang BENAR?",o:["彼はもう帰ったはずです。","彼はもう帰ったはずだです。","彼はもう帰るはずだた。","彼はもう帰ったはずます。"],a:0,note:"帰ったはずです = seharusnya sudah pulang。"},
+{t:"arrange",w:["田中さん","は","今日","、","来る","はず","です"],note:"“来るはずです” = seharusnya datang。"},
+{t:"mc",q:"“はずがない” artinya?",o:["Tidak mungkin","Pasti","Mungkin","Harus"],a:0,note:"~はずがない = tidak mungkin。"},
+{t:"fill",s:"あんなに 勉強したのだから、合格する___だ。",o:["はず","わけ","らしい","ばかり"],a:0,note:"合格するはずだ = seharusnya lulus。"},
+{t:"mc",q:"Bedanya “~はずだ” dan “~わけだ”?",o:["はずだ = seharusnya (harapan), わけだ = pantas saja (penjelasan)","Sama saja","はずだ = lampau, わけだ = kini","はずだ = kasar, わけだ = sopan"],a:0,note:"来るはずだ (seharusnya datang) vs 疲れているわけだ (pantas saja lelah)。"},
+{t:"fill",s:"この電車は 9時に 着く___です。",o:["はず","わけ","らしい","ばかり"],a:0,note:"着くはずです = seharusnya tiba jam 9。"}],
+g19:[
+{t:"mc",q:"“彼は来るにちがいない” artinya?",o:["Dia pasti datang","Dia mungkin datang","Dia tidak datang","Dia tidak mau datang"],a:0,note:"~にちがいない = pasti (keyakinan kuat)。"},
+{t:"fill",s:"あの人は 田中さん___ちがいない。",o:["に","は","が","を"],a:0,note:"田中さんにちがいない = pasti dia Tanaka。"},
+{t:"mc",q:"“これは本物にちがいない” artinya?",o:["Ini pasti asli","Ini mungkin palsu","Ini palsu","Ini tidak asli"],a:0,note:"本物にちがいない = pasti asli。"},
+{t:"fill",s:"あんなに 練習したのだから、成功する___ちがいない。",o:["に","は","が","を"],a:0,note:"成功するにちがいない = pasti berhasil。"},
+{t:"mc",q:"Kalimat mana yang BENAR?",o:["彼は犯人にちがいない。","彼は犯人にちがいないですです。","彼は犯人ちがいない。","彼は犯人にはちがいない。"],a:0,note:"犯人にちがいない = pasti dia pelakunya。"},
+{t:"arrange",w:["あの","声","は","、","田中さん","に","ちがいない"],note:"“にちがいない” = pasti。"},
+{t:"mc",q:"Bedanya “~にちがいない” dan “~はずだ”?",o:["にちがいない = pasti (sangat yakin), はずだ = seharusnya (harapan)","Sama saja","にちがいない = lampau, はずだ = kini","にちがいない = kasar, はずだ = sopan"],a:0,note:"来るにちがいない (pasti datang) vs 来るはずだ (seharusnya datang)。"},
+{t:"fill",s:"この鍵は あのドアのもの___ちがいない。",o:["に","は","が","を"],a:0,note:"〜にちがいない = pasti。"},
+{t:"mc",q:"“あの店はおいしいにちがいない” artinya?",o:["Toko itu pasti enak","Toko itu mungkin enak","Toko itu tidak enak","Toko itu tutup"],a:0,note:"おいしいにちがいない = pasti enak。"},
+{t:"fill",s:"彼は きっと もう 知っている___ちがいない。",o:["に","は","が","を"],a:0,note:"知っているにちがいない = pasti sudah tahu。"}],
+g20:[
+{t:"mc",q:"“召し上がる” dipakai untuk siapa?",o:["Orang lain yang dihormati (guru, tamu)","Diri sendiri","Teman sebaya","Anak kecil"],a:0,note:"召し上がる = makan (hormat, untuk orang lain)。"},
+{t:"fill",s:"先生、どうぞ お___ください。",o:["召し上がり","食べ","いただき","見"],a:0,note:"お召し上がりください = silakan makan。"},
+{t:"mc",q:"“いただく” adalah bentuk rendah hati dari?",o:["もらう / 食べる / 飲む (untuk diri sendiri)","あげる","見る","来る"],a:0,note:"いただく = menerima / makan / minum (rendah hati, untuk diri sendiri)。"},
+{t:"fill",s:"わたしが 資料を 拝見___。",o:["します","するです","しる","せます"],a:0,note:"拝見します = saya melihat (rendah hati)。"},
+{t:"mc",q:"“伺う” adalah bentuk rendah hati dari?",o:["聞く / 訪ねる (untuk diri sendiri)","言う","見る","食べる"],a:0,note:"伺う = bertanya / mengunjungi (rendah hati)。"},
+{t:"arrange",w:["先生","は","もう","いらっしゃいました","か"],note:"“いらっしゃいました” = datang (hormat, lampau)。"},
+{t:"mc",q:"“おっしゃる” adalah bentuk hormat dari?",o:["言う","聞く","見る","する"],a:0,note:"おっしゃる = berkata (hormat)。"},
+{t:"fill",s:"先生が おっしゃった___、よく 分かりました。",o:["とおり","とおりに","とおりで","とおりを"],a:0,note:"おっしゃったとおり = seperti yang guru katakan。"},
+{t:"mc",q:"“申す” dipakai untuk siapa?",o:["Diri sendiri (rendah hati)","Orang yang dihormati","Teman sebaya","Anak kecil"],a:0,note:"申す = berkata (rendah hati, untuk diri sendiri)。"},
+{t:"fill",s:"わたしは ダニエルと 申___。",o:["します","するです","しる","せます"],a:0,note:"申します = saya bernama … (rendah hati)。"}],
+g21:[
+{t:"mc",q:"“行かざるを得ない” artinya?",o:["Tidak ada pilihan selain pergi","Tidak boleh pergi","Tidak ingin pergi","Boleh pergi"],a:0,note:"~ざるを得ない = terpaksa / tidak ada pilihan lain。"},
+{t:"fill",s:"この仕事は 明日までに 終わら___を得ない。",o:["ざる","ない","て","た"],a:0,note:"終わらざるを得ない = tidak ada pilihan selain menyelesaikan。"},
+{t:"mc",q:"“認めざるを得ない” artinya?",o:["Terpaksa mengakui","Tidak mau mengakui","Tidak boleh mengakui","Boleh mengakui"],a:0,note:"認める → 認めざるを得ない。"},
+{t:"fill",s:"お金が ないから、諦め___を得ない。",o:["ざる","ない","て","た"],a:0,note:"諦めざるを得ない = terpaksa menyerah。"},
+{t:"mc",q:"Kalimat mana yang BENAR?",o:["行かざるを得ません。","行かないざるを得ません。","行くざるを得ません。","行ってざるを得ません。"],a:0,note:"行く → 行かざるを得ない。"},
+{t:"arrange",w:["彼","は","謝ら","ざる","を","得なかった"],note:"“謝らざるを得なかった” = terpaksa meminta maaf。"},
+{t:"mc",q:"“食べざるを得ない” artinya?",o:["Terpaksa makan","Tidak boleh makan","Tidak ingin makan","Boleh makan"],a:0,note:"食べる → 食べざるを得ない。"},
+{t:"fill",s:"電車が 止まったから、歩いて 帰ら___を得ない。",o:["ざる","ない","て","た"],a:0,note:"帰らざるを得ない = terpaksa pulang (berjalan kaki)。"},
+{t:"mc",q:"Apa arti “~ざるを得ない”?",o:["Terpaksa / tidak ada pilihan lain","Tidak boleh","Tidak ingin","Boleh"],a:0,note:"Contoh: 行かざるを得ない (terpaksa pergi)。"},
+{t:"fill",s:"この事実は 認め___を得ない。",o:["ざる","ない","て","た"],a:0,note:"認めざるを得ない = terpaksa mengakui。"}],
+g22:[
+{t:"mc",q:"“延期を余儀なくされる” artinya?",o:["Terpaksa menunda","Sengaja menunda","Tidak menunda","Menunda sebentar"],a:0,note:"~を余儀なくされる = terpaksa (karena keadaan)。"},
+{t:"fill",s:"台風のため、試合は 中止___余儀なくされた。",o:["を","が","に","で"],a:0,note:"中止を余儀なくされた = terpaksa dibatalkan。"},
+{t:"mc",q:"“参加を余儀なくされる” artinya?",o:["Terpaksa ikut serta","Sengaja ikut","Tidak ikut","Ingin ikut"],a:0,note:"参加を余儀なくされる。"},
+{t:"fill",s:"雨のため、イベントは 変更___余儀なくされた。",o:["を","が","に","で"],a:0,note:"変更を余儀なくされた = terpaksa diubah。"},
+{t:"mc",q:"Kalimat mana yang BENAR?",o:["台風のため、旅行は中止を余儀なくされた。","台風のため、旅行は中止が余儀なくされた。","台風のため、旅行は中止に余儀なくされた。","台風のため、旅行は中止で余儀なくされた。"],a:0,note:"中止を余儀なくされる (objek memakai を)。"},
+{t:"arrange",w:["地震","の","ため","、","会議","は","延期","を","余儀なくされた"],note:"“延期を余儀なくされた” = terpaksa ditunda。"},
+{t:"mc",q:"Apa nuansa “~を余儀なくされる”?",o:["Terpaksa karena keadaan (tidak diinginkan)","Sengaja","Dengan senang hati","Kebiasaan"],a:0,note:"Contoh: 雨のため中止を余儀なくされた。"},
+{t:"fill",s:"大雪のため、学校は 休校___余儀なくされた。",o:["を","が","に","で"],a:0,note:"休校を余儀なくされた = terpaksa libur。"},
+{t:"mc",q:"“値上げを余儀なくされる” artinya?",o:["Terpaksa menaikkan harga","Sengaja menaikkan harga","Tidak menaikkan harga","Menurunkan harga"],a:0,note:"値上げを余儀なくされる。"},
+{t:"fill",s:"事故のため、電車は 運転見合わせ___余儀なくされた。",o:["を","が","に","で"],a:0,note:"運転見合わせを余儀なくされた = terpaksa dihentikan。"}],
+g23:[
+{t:"mc",q:"“出発に先立って” artinya?",o:["Sebelum berangkat","Setelah berangkat","Saat berangkat","Karena berangkat"],a:0,note:"~に先立って = sebelum (formal)。"},
+{t:"fill",s:"会議___先立って、資料を配ります。",o:["に","を","が","で"],a:0,note:"会議に先立って = sebelum rapat。"},
+{t:"mc",q:"“成功に先立って” artinya?",o:["Sebelum berhasil","Setelah berhasil","Saat berhasil","Karena berhasil"],a:0,note:"成功に先立って。"},
+{t:"fill",s:"発表___先立って、準備をします。",o:["に","を","が","で"],a:0,note:"発表に先立って = sebelum presentasi。"},
+{t:"mc",q:"Kalimat mana yang BENAR?",o:["開会に先立って、あいさつをします。","開会を先立って、あいさつをします。","開会が先立って、あいさつをします。","開会で先立って、あいさつをします。"],a:0,note:"開会に先立って = sebelum pembukaan。"},
+{t:"arrange",w:["出発","に","先立って","、","荷物","を","確認する"],note:"“出発に先立って” = sebelum berangkat。"},
+{t:"mc",q:"“~に先立って” dipakai dalam situasi apa?",o:["Formal / tertulis","Percakapan santai dengan teman","Anak kecil","Lelucon"],a:0,note:"~に先立って adalah ungkapan formal。"},
+{t:"fill",s:"式典___先立って、国歌を歌います。",o:["に","を","が","で"],a:0,note:"式典に先立って = sebelum upacara。"},
+{t:"mc",q:"“結婚に先立って” artinya?",o:["Sebelum menikah","Setelah menikah","Saat menikah","Karena menikah"],a:0,note:"結婚に先立って。"},
+{t:"fill",s:"試合___先立って、選手を紹介します。",o:["に","を","が","で"],a:0,note:"試合に先立って = sebelum pertandingan。"}],
+g24:[
+{t:"mc",q:"“今日をかわきりに” artinya?",o:["Mulai hari ini (sebagai titik awal)","Sampai hari ini","Kemarin","Besok"],a:0,note:"~をかわきりに = mulai dari … sebagai titik balik。"},
+{t:"fill",s:"今回___かわきりに、毎月会議を開きます。",o:["を","に","が","で"],a:0,note:"今回をかわきりに = mulai kali ini。"},
+{t:"mc",q:"“この事件をかわきりに” artinya?",o:["Mulai dari kejadian ini","Sampai kejadian ini","Karena kejadian ini","Sebelum kejadian ini"],a:0,note:"この事件をかわきりに = sejak kejadian ini (sebagai titik balik)。"},
+{t:"fill",s:"今月___かわきりに、新しい制度が始まります。",o:["を","に","が","で"],a:0,note:"今月をかわきりに = mulai bulan ini。"},
+{t:"mc",q:"Kalimat mana yang BENAR?",o:["今日をかわきりに、頑張ります。","今日にかわきりに、頑張ります。","今日がかわきりに、頑張ります。","今日でかわきりに、頑張ります。"],a:0,note:"今日をかわきりに。"},
+{t:"arrange",w:["今月","を","かわきりに","、","毎日","運動する"],note:"“今月をかわきりに” = mulai bulan ini。"},
+{t:"mc",q:"Apa arti “~をかわきりに”?",o:["Mulai dari … sebagai titik awal","Sampai …","Karena …","Sebelum …"],a:0,note:"Contoh: 今回をかわきりに (mulai kali ini)。"},
+{t:"fill",s:"この賞___かわきりに、さらに努力します。",o:["を","に","が","で"],a:0,note:"この賞をかわきりに = mulai dari penghargaan ini。"},
+{t:"mc",q:"“入学をかわきりに” artinya?",o:["Mulai dari masuk sekolah","Sampai masuk sekolah","Karena masuk sekolah","Sebelum masuk sekolah"],a:0,note:"入学をかわきりに。"},
+{t:"fill",s:"今日___かわきりに、日記をつけます。",o:["を","に","が","で"],a:0,note:"今日をかわきりに = mulai hari ini。"}],
 };
 
 /* ================= DATA: DAFTAR PELAJARAN (19 pelajaran, berurutan & terkunci) ================= */
 const LESSONS=[
-{id:"h1",track:"Hiragana",icon:"あ",title:"Hiragana 1 — あ行・か行",desc:"Huruf a i u e o dan ka ki ku ke ko",kind:"kana",script:"h",set:HIRA.slice(0,10)},
-{id:"h2",track:"Hiragana",icon:"さ",title:"Hiragana 2 — さ行・た行",desc:"Huruf sa shi su se so dan ta chi tsu te to",kind:"kana",script:"h",set:HIRA.slice(10,20)},
-{id:"h3",track:"Hiragana",icon:"な",title:"Hiragana 3 — な行・は行",desc:"Huruf na ni nu ne no dan ha hi fu he ho",kind:"kana",script:"h",set:HIRA.slice(20,30)},
-{id:"h4",track:"Hiragana",icon:"ま",title:"Hiragana 4 — ま行・や行・ら行・わ行",desc:"Huruf ma mi mu me mo, ya yu yo, ra ri ru re ro, wa wo, n",kind:"kana",script:"h",set:HIRA.slice(30,46)},
-{id:"h5",track:"Hiragana",icon:"が",title:"Hiragana 5 — Dakuten & ulasan",desc:"がざだばぱ dan ulasan semua hiragana",kind:"kana",script:"h",set:HIRA_DAKU},
-{id:"k1",track:"Katakana",icon:"ア",title:"Katakana 1 — ア行・カ行",desc:"Huruf a i u e o dan ka ki ku ke ko",kind:"kana",script:"k",set:KATA.slice(0,10)},
-{id:"k2",track:"Katakana",icon:"サ",title:"Katakana 2 — サ行・タ行",desc:"Huruf sa shi su se so dan ta chi tsu te to",kind:"kana",script:"k",set:KATA.slice(10,20)},
-{id:"k3",track:"Katakana",icon:"ナ",title:"Katakana 3 — ナ行・ハ行",desc:"Huruf na ni nu ne no dan ha hi fu he ho",kind:"kana",script:"k",set:KATA.slice(20,30)},
-{id:"k4",track:"Katakana",icon:"マ",title:"Katakana 4 — マ行・ヤ行・ラ行・ワ行",desc:"Huruf ma mi mu me mo, ya yu yo, ra ri ru re ro, wa wo, n",kind:"kana",script:"k",set:KATA.slice(30,46)},
-{id:"k5",track:"Katakana",icon:"ガ",title:"Katakana 5 — Dakuten & ulasan",desc:"ガザダバパ dan ulasan semua katakana",kind:"kana",script:"k",set:KATA_DAKU},
-{id:"v1",track:"Kosakata N5",icon:"👋",title:"Kosakata 1 — Sapaan & angka",desc:"20 kata: sapaan dasar dan angka 1–10000",kind:"vocab",cats:["sapaan","angka"]},
-{id:"v2",track:"Kosakata N5",icon:"🕐",title:"Kosakata 2 — Waktu & keluarga",desc:"Waktu, hari, dan anggota keluarga",kind:"vocab",cats:["waktu","keluarga"]},
-{id:"v3",track:"Kosakata N5",icon:"🍜",title:"Kosakata 3 — Makanan & perjalanan",desc:"Makanan, minuman, bandara, dan arah",kind:"vocab",cats:["makanan","perjalanan"]},
-{id:"v4",track:"Kosakata N5",icon:"🏨",title:"Kosakata 4 — Hotel, restoran & tempat",desc:"Hotel, restoran, tempat, dan alam",kind:"vocab",cats:["hotel","restoran","tempat"]},
-{id:"v5",track:"Kosakata N5",icon:"🏃",title:"Kosakata 5 — Kata kerja, sifat & benda",desc:"Kata kerja N5, kata sifat, dan benda sehari-hari",kind:"vocab",cats:["kerja","sifat","benda"]},
-{id:"g1",track:"Tata bahasa",icon:"📝",title:"Tata bahasa 1 — です / ます",desc:"Kalimat sopan: kata benda + です, kata kerja + ます",kind:"grammar",gid:"g1",intro:"Dalam bahasa Jepang sopan, kalimat diakhiri <b>です</b> (untuk kata benda / kata sifat) atau <b>ます</b> (untuk kata kerja). Contoh: わたしはダニエルです (Saya adalah Daniel), 本を読みます (Saya membaca buku)."},
-{id:"g2",track:"Tata bahasa",icon:"📝",title:"Tata bahasa 2 — Partikel は / が",desc:"は menandai topik, が menandai subjek",kind:"grammar",gid:"g2",intro:"<b>は</b> (dibaca “wa”) menandai <b>topik</b> — hal yang sedang dibicarakan. <b>が</b> menandai <b>subjek</b>, sering untuk hal baru atau penekanan. Contoh: わたしは学生です (topik: saya) — だれが来ましたか (subjek: siapa)."},
-{id:"g3",track:"Tata bahasa",icon:"📝",title:"Tata bahasa 3 — Partikel を / に / で",desc:"を = objek, に = tujuan, で = tempat kegiatan",kind:"grammar",gid:"g3",intro:"<b>を</b> (dibaca “o”) menandai objek: 本を読みます. <b>に</b> menandai tujuan: 学校に行きます. <b>で</b> menandai tempat kegiatan: 家で勉強します."},
-{id:"g4",track:"Tata bahasa",icon:"📝",title:"Tata bahasa 4 — Kata sifat-i & golongan kerja",desc:"Kata sifat berakhiran い, dan 3 golongan kata kerja",kind:"grammar",gid:"g4",intro:"Kata sifat-i berakhiran <b>い</b>: 大きい, 暑い. Negatifnya: い → <b>くないです</b> (暑くないです). Kata kerja ada 3 golongan: golongan 1 (書く→書きます), golongan 2 (食べる→食べます), golongan 3 (する→します, 来る→来ます)."}
+{lvl:"N5",id:"h1",track:"Hiragana",icon:"あ",title:"Hiragana 1 — あ行・か行",desc:"Huruf a i u e o dan ka ki ku ke ko",kind:"kana",script:"h",set:HIRA.slice(0,10)},
+{lvl:"N5",id:"h2",track:"Hiragana",icon:"さ",title:"Hiragana 2 — さ行・た行",desc:"Huruf sa shi su se so dan ta chi tsu te to",kind:"kana",script:"h",set:HIRA.slice(10,20)},
+{lvl:"N5",id:"h3",track:"Hiragana",icon:"な",title:"Hiragana 3 — な行・は行",desc:"Huruf na ni nu ne no dan ha hi fu he ho",kind:"kana",script:"h",set:HIRA.slice(20,30)},
+{lvl:"N5",id:"h4",track:"Hiragana",icon:"ま",title:"Hiragana 4 — ま行・や行・ら行・わ行",desc:"Huruf ma mi mu me mo, ya yu yo, ra ri ru re ro, wa wo, n",kind:"kana",script:"h",set:HIRA.slice(30,46)},
+{lvl:"N5",id:"h5",track:"Hiragana",icon:"が",title:"Hiragana 5 — Dakuten & ulasan",desc:"がざだばぱ dan ulasan semua hiragana",kind:"kana",script:"h",set:HIRA_DAKU},
+{lvl:"N5",id:"k1",track:"Katakana",icon:"ア",title:"Katakana 1 — ア行・カ行",desc:"Huruf a i u e o dan ka ki ku ke ko",kind:"kana",script:"k",set:KATA.slice(0,10)},
+{lvl:"N5",id:"k2",track:"Katakana",icon:"サ",title:"Katakana 2 — サ行・タ行",desc:"Huruf sa shi su se so dan ta chi tsu te to",kind:"kana",script:"k",set:KATA.slice(10,20)},
+{lvl:"N5",id:"k3",track:"Katakana",icon:"ナ",title:"Katakana 3 — ナ行・ハ行",desc:"Huruf na ni nu ne no dan ha hi fu he ho",kind:"kana",script:"k",set:KATA.slice(20,30)},
+{lvl:"N5",id:"k4",track:"Katakana",icon:"マ",title:"Katakana 4 — マ行・ヤ行・ラ行・ワ行",desc:"Huruf ma mi mu me mo, ya yu yo, ra ri ru re ro, wa wo, n",kind:"kana",script:"k",set:KATA.slice(30,46)},
+{lvl:"N5",id:"k5",track:"Katakana",icon:"ガ",title:"Katakana 5 — Dakuten & ulasan",desc:"ガザダバパ dan ulasan semua katakana",kind:"kana",script:"k",set:KATA_DAKU},
+{lvl:"N5",id:"v1",track:"Kosakata N5",icon:"👋",title:"Kosakata 1 — Sapaan & angka",desc:"20 kata: sapaan dasar dan angka 1–10000",kind:"vocab",cats:["sapaan","angka"]},
+{lvl:"N5",id:"v2",track:"Kosakata N5",icon:"🕐",title:"Kosakata 2 — Waktu & keluarga",desc:"Waktu, hari, dan anggota keluarga",kind:"vocab",cats:["waktu","keluarga"]},
+{lvl:"N5",id:"v3",track:"Kosakata N5",icon:"🍜",title:"Kosakata 3 — Makanan & perjalanan",desc:"Makanan, minuman, bandara, dan arah",kind:"vocab",cats:["makanan","perjalanan"]},
+{lvl:"N5",id:"v4",track:"Kosakata N5",icon:"🏨",title:"Kosakata 4 — Hotel, restoran & tempat",desc:"Hotel, restoran, tempat, dan alam",kind:"vocab",cats:["hotel","restoran","tempat"]},
+{lvl:"N5",id:"v5",track:"Kosakata N5",icon:"🏃",title:"Kosakata 5 — Kata kerja, sifat & benda",desc:"Kata kerja N5, kata sifat, dan benda sehari-hari",kind:"vocab",cats:["kerja","sifat","benda"]},
+{lvl:"N5",id:"g1",track:"Tata bahasa",icon:"📝",title:"Tata bahasa 1 — です / ます",desc:"Kalimat sopan: kata benda + です, kata kerja + ます",kind:"grammar",gid:"g1",intro:"Dalam bahasa Jepang sopan, kalimat diakhiri <b>です</b> (untuk kata benda / kata sifat) atau <b>ます</b> (untuk kata kerja). Contoh: わたしはダニエルです (Saya adalah Daniel), 本を読みます (Saya membaca buku)."},
+{lvl:"N5",id:"g2",track:"Tata bahasa",icon:"📝",title:"Tata bahasa 2 — Partikel は / が",desc:"は menandai topik, が menandai subjek",kind:"grammar",gid:"g2",intro:"<b>は</b> (dibaca “wa”) menandai <b>topik</b> — hal yang sedang dibicarakan. <b>が</b> menandai <b>subjek</b>, sering untuk hal baru atau penekanan. Contoh: わたしは学生です (topik: saya) — だれが来ましたか (subjek: siapa)."},
+{lvl:"N5",id:"g3",track:"Tata bahasa",icon:"📝",title:"Tata bahasa 3 — Partikel を / に / で",desc:"を = objek, に = tujuan, で = tempat kegiatan",kind:"grammar",gid:"g3",intro:"<b>を</b> (dibaca “o”) menandai objek: 本を読みます. <b>に</b> menandai tujuan: 学校に行きます. <b>で</b> menandai tempat kegiatan: 家で勉強します."},
+{lvl:"N5",id:"g4",track:"Tata bahasa",icon:"📝",title:"Tata bahasa 4 — Kata sifat-i & golongan kerja",desc:"Kata sifat berakhiran い, dan 3 golongan kata kerja",kind:"grammar",gid:"g4",intro:"Kata sifat-i berakhiran <b>い</b>: 大きい, 暑い. Negatifnya: い → <b>くないです</b> (暑くないです). Kata kerja ada 3 golongan: golongan 1 (書く→書きます), golongan 2 (食べる→食べます), golongan 3 (する→します, 来る→来ます)."},
+{id:"n4v1",lvl:"N4",track:"Kosakata N4",icon:"🏃",title:"Kosakata N4 — 1: Kata kerja",desc:"Kata kerja N4: meminjam, mengirim, memulai, mencari, dan lainnya",kind:"vocab",cats:["n4"]},
+{id:"n4v2",lvl:"N4",track:"Kosakata N4",icon:"✨",title:"Kosakata N4 — 2: Kata sifat",desc:"Kata sifat N4: terang, berat, kuat, manis, pedas, aman, dan lainnya",kind:"vocab",cats:["n4"]},
+{id:"n4v3",lvl:"N4",track:"Kosakata N4",icon:"📍",title:"Kosakata N4 — 3: Tempat & perjalanan",desc:"Tempat dan perjalanan N4: kereta bawah tanah, taman, musim, dan lainnya",kind:"vocab",cats:["n4"]},
+{id:"n4v4",lvl:"N4",track:"Kosakata N4",icon:"📘",title:"Kosakata N4 — 4: Campuran",desc:"Latihan acak dari 100 kata N4: sekolah, ujian, bahasa Jepang, dan lainnya",kind:"vocab",cats:["n4"]},
+{id:"n4g1",lvl:"N4",track:"Tata bahasa N4",icon:"📝",title:"Tata bahasa N4 — 1: Bentuk te",desc:"Bentuk te: 書いて, 読んで, 食べて, して, 来て",kind:"grammar",gid:"g5",intro:"Bentuk te dipakai untuk permintaan (<b>〜てください</b>), menghubungkan kalimat, dan bentuk sedang (<b>〜ている</b>). Cara membentuk: golongan 1: く→いて, ぐ→いで, す→して, う・つ・る→って, ぬ・ぶ・む→んで; golongan 2: hapus る + て; golongan 3: する→して, 来る→来て (きて)。"},
+{id:"n4g2",lvl:"N4",track:"Tata bahasa N4",icon:"📝",title:"Tata bahasa N4 — 2: Bentuk ta & nai",desc:"Bentuk lampau (ta) dan negatif biasa (nai)",kind:"grammar",gid:"g6",intro:"Bentuk ta = lampau (te → ta: いて→いた, んで→んだ, って→った, して→した). Bentuk nai = negatif biasa (golongan 1: akhiran -u → -a + ない; golongan 2: hapus る + ない; する→しない, 来る→来ない)。"},
+{id:"n4g3",lvl:"N4",track:"Tata bahasa N4",icon:"📝",title:"Tata bahasa N4 — 3: ~tai (ingin)",desc:"〜たい = ingin: 食べたい, 行きたい, 飲みたい",kind:"grammar",gid:"g7",intro:"Pola <b>〜たい</b> = ingin. Caranya: bentuk ます tanpa ます + たい (食べます → 食べたい). Negatifnya: たい → たくない (食べたくない). Bentuk sopannya: たいです。"},
+{id:"n4g4",lvl:"N4",track:"Tata bahasa N4",icon:"📝",title:"Tata bahasa N4 — 4: ~nakereba narimasen (harus)",desc:"〜なければなりません = harus: 行かなければなりません",kind:"grammar",gid:"g8",intro:"Pola <b>〜なければなりません</b> = harus. Caranya: bentuk nai tanpa い + ければなりません (行かない → 行かなければなりません). する → しなければなりません, 来る → 来なければなりません (こなければなりません)。"},
+{id:"n4g5",lvl:"N4",track:"Tata bahasa N4",icon:"📝",title:"Tata bahasa N4 — 5: ~temo ii / ~tewa ikenai",desc:"〜てもいい = boleh, 〜てはいけない = tidak boleh",kind:"grammar",gid:"g9",intro:"<b>〜てもいい</b> = boleh (te + もいい). <b>〜てはいけない</b> = tidak boleh (te + はいけない). Contoh: 食べてもいいです (boleh makan), 食べてはいけません (tidak boleh makan)。"},
+{id:"n4g6",lvl:"N4",track:"Tata bahasa N4",icon:"📝",title:"Tata bahasa N4 — 6: ~tara & ~toki",desc:"〜たら = kalau/jika, 〜とき = saat/ketika",kind:"grammar",gid:"g10",intro:"<b>〜たら</b> = kalau / jika (bentuk ta + ら: 降ったら). <b>〜とき</b> = saat / ketika (bentuk biasa + とき: 食べるとき; bentuk ta + とき untuk lampau: 行ったとき)。"},
+{id:"n3v1",lvl:"N3",track:"Kosakata N3",icon:"📗",title:"Kosakata N3 — 1: Kata kerja & benda",desc:"Kata kerja dan benda N3: usaha, pengalaman, rapat, hewan, dan lainnya",kind:"vocab",cats:["n3"]},
+{id:"n3v2",lvl:"N3",track:"Kosakata N3",icon:"📗",title:"Kosakata N3 — 2: Campuran",desc:"Latihan acak dari 80 kata N3: kesehatan, perjalanan, cuaca, dan lainnya",kind:"vocab",cats:["n3"]},
+{id:"n3g1",lvl:"N3",track:"Tata bahasa N3",icon:"📝",title:"Tata bahasa N3 — 1: ~te shimau",desc:"〜てしまう = sudah terlanjur / selesai total",kind:"grammar",gid:"g11",intro:"<b>〜てしまう</b> = sudah selesai total / terlanjur (kadang dengan rasa menyesal). Contoh: 忘れてしまった (terlanjur lupa), 食べてしまった (sudah habis dimakan)。"},
+{id:"n3g2",lvl:"N3",track:"Tata bahasa N3",icon:"📝",title:"Tata bahasa N3 — 2: ~te miru",desc:"〜てみる = mencoba: 食べてみる, 行ってみる",kind:"grammar",gid:"g12",intro:"<b>〜てみる</b> = mencoba. Contoh: 食べてみる (mencoba makan), 行ってみる (mencoba pergi)。"},
+{id:"n3g3",lvl:"N3",track:"Tata bahasa N3",icon:"📝",title:"Tata bahasa N3 — 3: ~sou da (katanya)",desc:"〜そうだ = katanya (dari kabar orang)",kind:"grammar",gid:"g13",intro:"<b>〜そうだ</b> (dari kabar) = katanya. Bentuk biasa + そうだ: 降るそうです (katanya akan hujan). Jangan tertukar dengan “kelihatannya”: おいしそうです (kelihatannya enak) — “い”-nya hilang。"},
+{id:"n3g4",lvl:"N3",track:"Tata bahasa N3",icon:"📝",title:"Tata bahasa N3 — 4: ~you da (sepertinya)",desc:"〜ようだ = sepertinya (dari pengamatan sendiri)",kind:"grammar",gid:"g14",intro:"<b>〜ようだ</b> = sepertinya (dari pengamatan sendiri). Kata kerja biasa + ようだ, kata benda + の + ようだ, kata sifat-na + な + ようだ。"},
+{id:"n3g5",lvl:"N3",track:"Tata bahasa N3",icon:"📝",title:"Tata bahasa N3 — 5: ~rashii (khas)",desc:"〜らしい = khas / seperti layaknya",kind:"grammar",gid:"g15",intro:"<b>〜らしい</b> = khas / seperti layaknya. Contoh: 学生らしい (khas mahasiswa), 春らしい (khas musim semi)。"},
+{id:"n3g6",lvl:"N3",track:"Tata bahasa N3",icon:"📝",title:"Tata bahasa N3 — 6: ~bakari (baru saja)",desc:"〜たばかり = baru saja: 食べたばかり",kind:"grammar",gid:"g16",intro:"<b>〜たばかり</b> = baru saja. Bentuk ta + ばかり: 食べたばかり (baru saja makan), 来たばかり (baru saja datang)。"},
+{id:"n2v1",lvl:"N2",track:"Kosakata N2",icon:"📙",title:"Kosakata N2 — Campuran",desc:"Latihan dari 60 kata N2: penilaian, keputusan, kerja sama, dan lainnya",kind:"vocab",cats:["n2"]},
+{id:"n2g1",lvl:"N2",track:"Tata bahasa N2",icon:"📝",title:"Tata bahasa N2 — 1: ~wake da",desc:"〜わけだ = pantas saja / jadi (penjelasan)",kind:"grammar",gid:"g17",intro:"<b>〜わけだ</b> = pantas saja / jadi (penjelasan dari alasan). Contoh: 毎日練習しているから、上手なわけだ. Lawannya: 〜わけがない = tidak mungkin。"},
+{id:"n2g2",lvl:"N2",track:"Tata bahasa N2",icon:"📝",title:"Tata bahasa N2 — 2: ~hazu da",desc:"〜はずだ = seharusnya / pasti (harapan)",kind:"grammar",gid:"g18",intro:"<b>〜はずだ</b> = seharusnya / pasti (harapan atau perkiraan). Contoh: 来るはずだ (seharusnya datang). Lawannya: 〜はずがない = tidak mungkin。"},
+{id:"n2g3",lvl:"N2",track:"Tata bahasa N2",icon:"📝",title:"Tata bahasa N2 — 3: ~ni chigainai",desc:"〜にちがいない = pasti (keyakinan kuat)",kind:"grammar",gid:"g19",intro:"<b>〜にちがいない</b> = pasti (keyakinan sangat kuat). Contoh: 彼は来るにちがいない (dia pasti datang). Lebih kuat dari 〜はずだ。"},
+{id:"n2g4",lvl:"N2",track:"Tata bahasa N2",icon:"📝",title:"Tata bahasa N2 — 4: Keigo dasar",desc:"Bahasa hormat: 召し上がる, いただく, 伺う, 申す",kind:"grammar",gid:"g20",intro:"Keigo = bahasa hormat. <b>Sonkeigo</b> (untuk orang lain): いらっしゃる, 召し上がる, おっしゃる, ご覧になる. <b>Kenjougo</b> (untuk diri sendiri): 申す, 伺う, 拝見する, いただく。"},
+{id:"n2g5",lvl:"N2",track:"Tata bahasa N2",icon:"📝",title:"Tata bahasa N2 — 5: ~zaru wo enai",desc:"〜ざるを得ない = terpaksa / tidak ada pilihan lain",kind:"grammar",gid:"g21",intro:"<b>〜ざるを得ない</b> = terpaksa / tidak ada pilihan lain. Caranya: bentuk nai tanpa い + ざるを得ない (行かない → 行かざるを得ない)。"},
+{id:"n1v1",lvl:"N1",track:"Kosakata N1",icon:"📕",title:"Kosakata N1 — 1: Kata kerja & sifat",desc:"Kata kerja dan sifat N1: ragu, terpaksa, menonjol, hati-hati, dan lainnya",kind:"vocab",cats:["n1"]},
+{id:"n1v2",lvl:"N1",track:"Kosakata N1",icon:"📕",title:"Kosakata N1 — 2: Campuran",desc:"Latihan dari 40 kata N1: keigo, kata kerja gabungan, dan lainnya",kind:"vocab",cats:["n1"]},
+{id:"n1g1",lvl:"N1",track:"Tata bahasa N1",icon:"📝",title:"Tata bahasa N1 — 1: ~wo yoginaku sareru",desc:"〜を余儀なくされる = terpaksa (karena keadaan)",kind:"grammar",gid:"g22",intro:"<b>〜を余儀なくされる</b> = terpaksa (karena keadaan, tidak diinginkan). Kata benda + を + 余儀なくされる: 中止を余儀なくされた (terpaksa dibatalkan)。"},
+{id:"n1g2",lvl:"N1",track:"Tata bahasa N1",icon:"📝",title:"Tata bahasa N1 — 2: ~ni sakidatte",desc:"〜に先立って = sebelum (formal, tertulis)",kind:"grammar",gid:"g23",intro:"<b>〜に先立って</b> = sebelum (formal, tertulis). Kata benda + に先立って: 会議に先立って (sebelum rapat)。"},
+{id:"n1g3",lvl:"N1",track:"Tata bahasa N1",icon:"📝",title:"Tata bahasa N1 — 3: ~wo kawakiri ni",desc:"〜をかわきりに = mulai dari … sebagai titik awal",kind:"grammar",gid:"g24",intro:"<b>〜をかわきりに</b> = mulai dari … sebagai titik awal / titik balik. Contoh: 今日をかわきりに (mulai hari ini)。"},
 ];
+
+/* ================= LEVEL N5–N1 ================= */
+const LEVELS=[
+{id:"N5",name:"N5",desc:"Pemula",icon:"🌱"},
+{id:"N4",name:"N4",desc:"Dasar",icon:"🌿"},
+{id:"N3",name:"N3",desc:"Menengah",icon:"🌳"},
+{id:"N2",name:"N2",desc:"Lanjut",icon:"🏔️"},
+{id:"N1",name:"N1",desc:"Mahir",icon:"👑"}];
+function levelLessons(lvl){return LESSONS.filter(x=>x.lvl===lvl);}
+function levelUnlocked(lvl){
+  const i=LEVELS.findIndex(x=>x.id===lvl);
+  if(i<=0)return true;
+  return levelLessons(LEVELS[i-1].id).every(x=>prog.done[x.id]);
+}
+function levelProgress(lvl){const ls=levelLessons(lvl);return [ls.filter(x=>prog.done[x.id]).length,ls.length];}
 /* ================= UTIL ================= */
 const $=s=>document.querySelector(s);
 const $$=s=>Array.from(document.querySelectorAll(s));
@@ -663,9 +1220,53 @@ function renderDictSearch(q){
   out.innerHTML=res.length?res.map(e=>wordCard(e,true)).join(""):'<p class="note">Tidak ditemukan di kamus. Coba kata lain, atau lihat tab Frasa.</p>';
 }
 $("#dictSearch").addEventListener("input",e=>renderDictSearch(e.target.value));
-$("#translateBtn").addEventListener("click",()=>{
-  const raw=$("#inputText").value.trim();
-  const out=$("#translateOut");
+/* ================= TERJEMAH ONLINE / OFFLINE ================= */
+let forceOffline=lsGet("tbo_force_offline",false);
+let netOnline=null;
+function updateNetChip(){
+  const chip=$("#netChip"),btn=$("#forceOffBtn");
+  if(!chip||!btn)return;
+  if(forceOffline){chip.textContent="⚪ Offline — kamus bawaan (dipaksa)";btn.textContent="Izinkan online";}
+  else if(netOnline===true){chip.textContent="🟢 Online — Google Translate";btn.textContent="Paksa offline";}
+  else if(netOnline===false){chip.textContent="⚪ Offline — kamus bawaan";btn.textContent="Paksa offline";}
+  else{chip.textContent="⚪ Mengecek koneksi…";btn.textContent="Paksa offline";}
+}
+async function probeOnline(){
+  if(forceOffline){netOnline=false;updateNetChip();return false;}
+  if(!navigator.onLine){netOnline=false;updateNetChip();return false;}
+  try{
+    const c=new AbortController();const tm=setTimeout(()=>{try{c.abort();}catch(e){}},4000);
+    await fetch("https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=id&dt=t&q=hi",{signal:c.signal,mode:"cors"});
+    clearTimeout(tm);netOnline=true;
+  }catch(e){netOnline=false;}
+  updateNetChip();return netOnline;
+}
+async function translateOnline(text,to){
+  try{
+    let tl=to;
+    const mk=()=>"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl="+tl+"&dt=t&q="+encodeURIComponent(text);
+    const c=new AbortController();const tm=setTimeout(()=>{try{c.abort();}catch(e){}},8000);
+    let res=await fetch(mk(),{signal:c.signal,mode:"cors"});clearTimeout(tm);
+    if(!res.ok)return null;
+    let data=await res.json();
+    if(!data||!Array.isArray(data[0]))return null;
+    let detected=data[2]||"";
+    if(detected===tl){
+      tl=(tl==="ja"?"id":"ja");
+      res=await fetch(mk());if(!res.ok)return null;
+      data=await res.json();if(!data||!Array.isArray(data[0]))return null;
+      detected=data[2]||"";
+    }
+    const tr=data[0].map(s=>s[0]).join("");
+    if(!tr||!tr.trim())return null;
+    const nm=l=>l==="ja"?"Jepang":l==="id"?"Indonesia":l==="en"?"Inggris":"Otomatis";
+    let html='<div class="card" style="margin:0 0 8px"><div class="note">Dari '+nm(detected)+' ke '+nm(tl)+' • 🟢 Online — Google Translate</div><div style="font-size:19px;margin-top:6px">'+esc(tr)+'</div></div>';
+    const toks=text.split(/[\s,.;!?、。]+/).filter(Boolean);
+    toks.forEach(tok=>{const e=findEntry(tok);if(e){pushRecent(e);html+=wordCard(e,false);}});
+    return html;
+  }catch(e){return null;}
+}
+function doOfflineTranslate(raw,out){
   if(!raw){out.innerHTML='<p class="note">Tulis dulu kata atau kalimatnya.</p>';return;}
   const from=detectLang(raw);
   const to=dstSel.value===from?(from==="ja"?"id":"ja"):dstSel.value;
@@ -682,7 +1283,24 @@ $("#translateBtn").addEventListener("click",()=>{
   html+=parts.map(p=>p.e?esc(entryText(p.e,to)):('<span class="unknown">'+esc(p.tok)+' ?</span>')).join(" ")+'</div></div>';
   html+=parts.map(p=>p.e?wordCard(p.e,false):'<div class="word"><div class="ja unknown">'+esc(p.tok)+'</div><div class="note">Tidak ada di kamus — coba kata lain.</div></div>').join("");
   out.innerHTML=html;
+}
+$("#translateBtn").addEventListener("click",async()=>{
+  const raw=$("#inputText").value.trim();
+  const out=$("#translateOut");
+  if(!raw){out.innerHTML='<p class="note">Tulis dulu kata atau kalimatnya.</p>';return;}
+  if(!forceOffline&&netOnline!==false){
+    const html=await translateOnline(raw,dstSel.value);
+    if(html){out.innerHTML=html;return;}
+  }
+  doOfflineTranslate(raw,out);
 });
+$("#forceOffBtn").addEventListener("click",()=>{
+  forceOffline=!forceOffline;lsSet("tbo_force_offline",forceOffline);
+  if(!forceOffline)probeOnline();else updateNetChip();
+});
+window.addEventListener("online",()=>probeOnline());
+window.addEventListener("offline",()=>{netOnline=false;updateNetChip();});
+updateNetChip();probeOnline();
 /* ================= FRASA ================= */
 let phraseCat="sapaan";
 function renderPhraseCats(){
@@ -700,13 +1318,38 @@ renderPhraseCats();renderPhrases();renderRecentFav();updateStats();
 
 /* ================= BELAJAR ================= */
 let cur=null;
-function isUnlocked(i){return i===0||!!prog.done[LESSONS[i-1].id];}
+function isUnlocked(i){
+  const L=LESSONS[i];
+  if(!levelUnlocked(L.lvl))return false;
+  if(i===0)return true;
+  const prev=LESSONS[i-1];
+  if(prev.lvl!==L.lvl)return true;
+  return !!prog.done[prev.id];
+}
+function renderLevels(){
+  const el=$("#levelCards");
+  if(!el)return;
+  el.innerHTML='<div class="lvlgrid">'+LEVELS.map(L=>{
+    const pr=levelProgress(L.id);
+    const un=levelUnlocked(L.id);
+    const complete=pr[0]===pr[1];
+    return '<div class="lvlcard'+(un?"":" locked")+(complete?" done":"")+'"><div style="font-size:22px">'+L.icon+'</div><b>'+L.id+'</b><div class="note">'+esc(L.desc)+'</div><div class="bar"><i style="width:'+(pr[0]/pr[1]*100)+'%"></i></div><small>'+pr[0]+'/'+pr[1]+' pelajaran</small>'+(complete?'<div class="lvlbadge">🏅 '+L.id+' Master</div>':un?"":'<div class="note">🔒 Terkunci</div>')+'</div>';
+  }).join("")+'</div>';
+}
 function renderLessons(){
+  renderLevels();
   const el=$("#lessonList");
-  el.innerHTML=LESSONS.map((L,i)=>{
-    const locked=!isUnlocked(i);
-    const done=prog.done[L.id];
-    return '<div class="lesson '+(locked?"locked":"")+'"><div class="ico">'+L.icon+'</div><div class="t"><b>'+esc(L.title)+'</b><small>'+esc(L.track)+' • '+esc(L.desc)+'</small>'+(L.intro?'<small style="color:var(--indigo)">📖 Ada penjelasan materi di awal pelajaran.</small>':"")+'</div><div class="go">'+(done?'<span class="done-badge">✅ '+done+'/10</span>':locked?'<span class="note">🔒</span>':'<button class="btn btn-ghost btn-small" data-lesson="'+L.id+'">Mulai</button>')+'</div></div>';
+  el.innerHTML=LEVELS.map(L=>{
+    const ls=levelLessons(L.id);
+    const un=levelUnlocked(L.id);
+    let h='<div class="lvlhead">'+L.icon+' '+L.id+' — '+esc(L.desc)+(un?"":' • 🔒 Selesaikan level sebelumnya untuk membuka')+'</div>';
+    h+=ls.map(L2=>{
+      const i=LESSONS.indexOf(L2);
+      const locked=!isUnlocked(i);
+      const done=prog.done[L2.id];
+      return '<div class="lesson '+(locked?"locked":"")+'"><div class="ico">'+L2.icon+'</div><div class="t"><b>'+esc(L2.title)+'</b><small>'+esc(L2.track)+' • '+esc(L2.desc)+'</small>'+(L2.intro?'<small style="color:var(--indigo)">📖 Ada penjelasan materi di awal pelajaran.</small>':"")+'</div><div class="go">'+(done?'<span class="done-badge">✅ '+done+'/10</span>':locked?'<span class="note">🔒</span>':'<button class="btn btn-ghost btn-small" data-lesson="'+L2.id+'">Mulai</button>')+'</div></div>';
+    }).join("");
+    return h;
   }).join("");
 }
 document.addEventListener("click",e=>{
@@ -865,6 +1508,8 @@ function endLesson(passed){
     $("#doneEmoji").textContent="🎉";
     $("#doneTitle").textContent="Pelajaran selesai!";
     $("#doneText").innerHTML="Kamu menyelesaikan <b>"+esc(cur.L.title)+"</b> dan mendapat <b>"+cur.xp+" XP</b>"+(bonus?" (termasuk bonus sempurna +20 XP)":"")+". Pelajaran berikutnya sudah terbuka. Streak harianmu: 🔥 "+prog.streak+" hari.";
+    const lvLs=levelLessons(cur.L.lvl);
+    if(lvLs.length&&lvLs.every(x=>prog.done[x.id])){$("#doneText").innerHTML+="<br>🏅 <b>Level "+cur.L.lvl+" selesai!</b> Kamu mendapat badge <b>"+cur.L.lvl+" Master</b>!";}
   }else{
     $("#doneEmoji").textContent="💔";
     $("#doneTitle").textContent="Hati habis — coba lagi";
