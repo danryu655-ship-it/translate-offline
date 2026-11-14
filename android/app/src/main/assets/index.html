@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#4338ca">
+<title>Translate &amp; Belajar — Offline</title>
+<style>
+:root{--indigo:#4338ca;--indigo2:#6366f1;--bg:#f4f4fb;--card:#fff;--ink:#1e1b3a;--muted:#6b7280;--green:#16a34a;--red:#dc2626;--amber:#d97706;--line:#e5e7eb;--radius:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans",Arial,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding-bottom:96px}
+header{background:linear-gradient(135deg,#4338ca,#7c3aed);color:#fff;padding:18px 16px 14px;position:sticky;top:0;z-index:20}
+header h1{font-size:20px;line-height:1.2}
+header p{font-size:12px;opacity:.85;margin-top:2px}
+.stats{display:flex;gap:8px;margin-top:12px}
+.chip{flex:1;background:rgba(255,255,255,.16);border-radius:12px;padding:8px 6px;text-align:center}
+.chip b{display:block;font-size:16px}
+.chip span{font-size:11px;opacity:.85}
+main{max-width:720px;margin:0 auto;padding:14px 14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.row{display:flex;gap:8px;align-items:center}
+.row>*{flex:1}
+label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px}
+select,textarea,input[type=text]{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:12px;font-size:16px;background:#fff;color:var(--ink);font-family:inherit}
+textarea{min-height:84px;resize:vertical}
+button{font-family:inherit;cursor:pointer}
+.btn{border:none;border-radius:12px;padding:13px 16px;font-size:16px;font-weight:700}
+.btn-primary{background:var(--indigo);color:#fff;width:100%}
+.btn-primary:active{background:#3730a3}
+.btn-ghost{background:#eef2ff;color:var(--indigo);border:1px solid #c7d2fe}
+.btn-small{padding:9px 12px;font-size:14px}
+.btn-swap{flex:0 0 44px;height:44px;border-radius:50%;border:1.5px solid var(--line);background:#fff;font-size:20px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.result{margin-top:12px}
+.word{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px;background:#fff}
+.word .ja{font-size:22px;font-weight:700}
+.word .rm{font-size:13px;color:var(--muted)}
+.word .tr{font-size:16px;margin-top:4px}
+.word .tr b{color:var(--indigo)}
+.word .acts{margin-top:8px;display:flex;gap:8px}
+.mini{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;font-size:13px}
+.mini.on{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.unknown{color:var(--red);font-weight:700}
+.note{font-size:12.5px;color:var(--muted);line-height:1.5}
+.note b{color:var(--ink)}
+.cat{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--indigo2);margin:16px 0 8px}
+.tabs{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);display:flex;z-index:30;padding-bottom:env(safe-area-inset-bottom)}
+.tabs button{flex:1;background:none;border:none;padding:12px 4px 10px;font-size:13px;font-weight:700;color:var(--muted)}
+.tabs button.on{color:var(--indigo)}
+.tabs button .ic{display:block;font-size:22px;line-height:1.1}
+.tabpage{display:none}
+.tabpage.on{display:block}
+.phrase{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px;background:#fff}
+.phrase .ja{font-size:18px;font-weight:700}
+.phrase .rm{font-size:13px;color:var(--muted)}
+.phrase .tr{font-size:15px;margin-top:4px}
+.phrase .tr span{display:block}
+.lesson{border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;background:#fff;display:flex;gap:12px;align-items:center}
+.lesson.locked{opacity:.55}
+.lesson .ico{font-size:26px}
+.lesson .t{flex:1}
+.lesson .t b{font-size:16px}
+.lesson .t small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+.lesson .go{flex:0 0 auto}
+.done-badge{color:var(--green);font-weight:700;font-size:13px}
+.qcard{font-size:17px}
+.qcard .big{font-size:30px;font-weight:800;text-align:center;margin:10px 0 4px}
+.qcard .sub{text-align:center;color:var(--muted);font-size:14px;margin-bottom:12px}
+.opt{display:block;width:100%;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:14px;font-size:16px;margin-bottom:8px}
+.opt .ja{font-size:20px;font-weight:700}
+.opt .rm{font-size:13px;color:var(--muted)}
+.opt.correct{border-color:var(--green);background:#f0fdf4}
+.opt.wrong{border-color:var(--red);background:#fef2f2}
+.opt.sel{border-color:var(--indigo);background:#eef2ff}
+.hearts{font-size:20px;letter-spacing:2px}
+.progress{height:10px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin:8px 0}
+.progress i{display:block;height:100%;background:var(--green);border-radius:999px}
+.matchgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.matchbtn{border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:14px 10px;font-size:16px;min-height:56px}
+.matchbtn.sel{border-color:var(--indigo);background:#eef2ff}
+.matchbtn.ok{border-color:var(--green);background:#f0fdf4;color:var(--green)}
+.matchbtn.bad{border-color:var(--red);background:#fef2f2}
+.arrangebox{min-height:64px;border:2px dashed #c7d2fe;border-radius:12px;padding:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;background:#f8f7ff}
+.arrangebox:empty::after{content:"Ketuk kata di bawah secara berurutan";color:var(--muted);font-size:14px}
+.tok{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:10px 14px;font-size:16px}
+.tok .ja{font-weight:700}
+.center{text-align:center}
+.big-emoji{font-size:44px}
+.levelbar{height:8px;background:#e5e7eb;border-radius:999px;overflow:hidden}
+.levelbar i{display:block;height:100%;background:var(--amber)}
+.speak{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font-size:13px;margin-left:8px}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<header>
+  <h1>🌏 Translate &amp; Belajar</h1>
+  <p>Jepang • Indonesia • Inggris — 100% offline</p>
+  <div class="stats">
+    <div class="chip"><b id="statXp">0</b><span>XP</span></div>
+    <div class="chip"><b id="statLevel">Lv 1</b><span>Level</span></div>
+    <div class="chip"><b id="statStreak">🔥 0</b><span>Streak hari</span></div>
+    <div class="chip"><b id="statDone">0/19</b><span>Pelajaran</span></div>
+  </div>
+</header>
+<main>
+  <!-- ============ TAB TERJEMAH ============ -->
+  <section id="tab-terjemah" class="tabpage on">
+    <div class="card">
+      <div class="row" style="align-items:flex-end">
+        <div><label>Dari</label><select id="srcLang"></select></div>
+        <button class="btn-swap" id="swapBtn" title="Tukar bahasa">⇄</button>
+        <div><label>Ke</label><select id="dstLang"></select></div>
+      </div>
+      <div style="height:10px"></div>
+      <label for="inputText">Tulis kata atau kalimat</label>
+      <textarea id="inputText" placeholder="Contoh: ありがとう / arigatou / terima kasih / thank you"></textarea>
+      <div style="height:10px"></div>
+      <button class="btn btn-primary" id="translateBtn">Terjemahkan</button>
+      <div id="translateOut" class="result"></div>
+    </div>
+    <div class="card">
+      <b>Cari di kamus</b>
+      <p class="note" style="margin:4px 0 8px">Ketik kata dalam bahasa Jepang, romaji, Indonesia, atau Inggris.</p>
+      <input type="text" id="dictSearch" placeholder="Contoh: 水 / mizu / air / water">
+      <div id="dictOut" style="margin-top:10px"></div>
+    </div>
+    <div class="card">
+      <b>Terakhir dicari</b>
+      <div id="recentOut" style="margin-top:8px"><p class="note">Belum ada.</p></div>
+      <div style="height:10px"></div>
+      <b>Favorit ⭐</b>
+      <div id="favOut" style="margin-top:8px"><p class="note">Ketuk ⭐ pada sebuah kata untuk menyimpan.</p></div>
+    </div>
+    <div class="card">
+      <p class="note">ℹ️ <b>Jujur dulu:</b> aplikasi ini menerjemahkan dari <b>kamus dan buku frasa bawaan</b> (±200 kata + ±50 frasa), bukan mesin neural. Kata dan frasa umum diterjemahkan dengan benar; kalimat bebas yang panjang mungkin hanya diterjemahkan kata per kata. Semua data tersimpan di dalam aplikasi — <b>tanpa internet sama sekali</b>.</p>
+    </div>
+  </section>
+
+  <!-- ============ TAB BELAJAR ============ -->
+  <section id="tab-belajar" class="tabpage">
+    <div id="learnHome">
+      <div class="card">
+        <div class="row"><div><b>Level <span id="lvlNum">1</span></b><div class="levelbar" style="margin-top:6px"><i id="lvlBar" style="width:0%"></i></div></div><div style="flex:0 0 auto;text-align:right"><span id="lvlXpText" class="note">0 / 100 XP</span></div></div>
+        <p class="note" style="margin-top:8px">Selesaikan pelajaran berurutan untuk membuka yang berikutnya. Tiap pelajaran 10 soal, 3 hati ❤️ — hati habis berarti pelajaran gagal dan bisa diulang. Jawaban benar = +10 XP, pelajaran sempurna = bonus +20 XP.</p>
+      </div>
+      <div id="lessonList"></div>
+      <div class="card">
+        <p class="note">ℹ️ <b>Yang tidak ada di aplikasi ini:</b> penilaian pengucapan suara dan papan peringkat (leaderboard) — keduanya butuh server dan internet, jadi tidak mungkin offline. Tombol 🔊 memakai suara bawaan perangkat (Web Speech API) kalau tersedia; kalau tidak ada, tombolnya diam-diam tidak muncul.</p>
+      </div>
+    </div>
+    <div id="learnPlay" class="hidden">
+      <div class="card">
+        <div class="row"><div><b id="playTitle">Pelajaran</b><div class="note" id="playSub"></div></div><div style="flex:0 0 auto;text-align:right"><span class="hearts" id="playHearts">❤️❤️❤️</span><div class="note" id="playScore">Soal 1/10 • 0 XP</div></div></div>
+        <div class="progress"><i id="playBar" style="width:0%"></i></div>
+        <div id="qArea" class="qcard"></div>
+        <div id="qFeed" style="margin-top:10px"></div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn btn-ghost" id="quitLesson">Keluar</button>
+          <button class="btn btn-primary" id="nextQ" disabled>Lanjut</button>
+        </div>
+      </div>
+    </div>
+    <div id="learnDone" class="hidden">
+      <div class="card center">
+        <div class="big-emoji" id="doneEmoji">🎉</div>
+        <h2 id="doneTitle" style="margin:8px 0">Pelajaran selesai!</h2>
+        <p id="doneText" class="note"></p>
+        <div style="height:12px"></div>
+        <button class="btn btn-primary" id="doneBack">Kembali ke daftar</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TAB FRASA ============ -->
+  <section id="tab-frasa" class="tabpage">
+    <div class="card">
+      <div id="phraseCats" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+    </div>
+    <div id="phraseList"></div>
+  </section>
+</main>
+<nav class="tabs">
+  <button data-tab="terjemah" class="on"><span class="ic">🔤</span>Terjemah</button>
+  <button data-tab="belajar"><span class="ic">🎓</span>Belajar</button>
+  <button data-tab="frasa"><span class="ic">💬</span>Frasa</button>
+</nav>
+<script>
+"use strict";
+/* ================= DATA: KAMUS (ja, kana, romaji, id, en, kategori) ================= */
+const DICT = [
+{j:"こんにちは",k:"こんにちは",r:"konnichiwa",i:"Halo / selamat siang",e:"Hello / good afternoon",c:"sapaan"},
+{j:"おはようございます",k:"おはようございます",r:"ohayou gozaimasu",i:"Selamat pagi",e:"Good morning",c:"sapaan"},
+{j:"こんばんは",k:"こんばんは",r:"konbanwa",i:"Selamat malam",e:"Good evening",c:"sapaan"},
+{j:"ありがとう",k:"ありがとう",r:"arigatou",i:"Terima kasih",e:"Thank you",c:"sapaan"},
+{j:"ありがとうございます",k:"ありがとうございます",r:"arigatou gozaimasu",i:"Terima kasih banyak",e:"Thank you very much",c:"sapaan"},
+{j:"すみません",k:"すみません",r:"sumimasen",i:"Maaf / permisi",e:"Excuse me / sorry",c:"sapaan"},
+{j:"ごめんなさい",k:"ごめんなさい",r:"gomen nasai",i:"Maaf",e:"I'm sorry",c:"sapaan"},
+{j:"はい",k:"はい",r:"hai",i:"Ya",e:"Yes",c:"sapaan"},
+{j:"いいえ",k:"いいえ",r:"iie",i:"Tidak",e:"No",c:"sapaan"},
+{j:"さようなら",k:"さようなら",r:"sayounara",i:"Selamat tinggal",e:"Goodbye",c:"sapaan"},
+{j:"おやすみなさい",k:"おやすみなさい",r:"oyasumi nasai",i:"Selamat tidur",e:"Good night",c:"sapaan"},
+{j:"はじめまして",k:"はじめまして",r:"hajimemashite",i:"Senang bertemu denganmu",e:"Nice to meet you",c:"sapaan"},
+{j:"よろしくおねがいします",k:"よろしくおねがいします",r:"yoroshiku onegaishimasu",i:"Mohon bantuannya",e:"Please treat me well",c:"sapaan"},
+{j:"どうぞ",k:"どうぞ",r:"douzo",i:"Silakan",e:"Please / here you go",c:"sapaan"},
+{j:"どういたしまして",k:"どういたしまして",r:"dou itashimashite",i:"Sama-sama",e:"You're welcome",c:"sapaan"},
+{j:"すごい",k:"すごい",r:"sugoi",i:"Hebat",e:"Amazing",c:"sapaan"},
+{j:"おめでとうございます",k:"おめでとうございます",r:"omedetou gozaimasu",i:"Selamat",e:"Congratulations",c:"sapaan"},
+{j:"いただきます",k:"いただきます",r:"itadakimasu",i:"Selamat makan",e:"Let's eat",c:"sapaan"},
+{j:"ごちそうさまでした",k:"ごちそうさまでした",r:"gochisousama deshita",i:"Terima kasih atas makanannya",e:"Thank you for the meal",c:"sapaan"},
+{j:"もしもし",k:"もしもし",r:"moshi moshi",i:"Halo (telepon)",e:"Hello (on the phone)",c:"sapaan"},
+{j:"一",k:"いち",r:"ichi",i:"satu",e:"one",c:"angka"},
+{j:"二",k:"に",r:"ni",i:"dua",e:"two",c:"angka"},
+{j:"三",k:"さん",r:"san",i:"tiga",e:"three",c:"angka"},
+{j:"四",k:"よん",r:"yon",i:"empat",e:"four",c:"angka"},
+{j:"五",k:"ご",r:"go",i:"lima",e:"five",c:"angka"},
+{j:"六",k:"ろく",r:"roku",i:"enam",e:"six",c:"angka"},
+{j:"七",k:"なな",r:"nana",i:"tujuh",e:"seven",c:"angka"},
+{j:"八",k:"はち",r:"hachi",i:"delapan",e:"eight",c:"angka"},
+{j:"九",k:"きゅう",r:"kyuu",i:"sembilan",e:"nine",c:"angka"},
+{j:"十",k:"じゅう",r:"juu",i:"sepuluh",e:"ten",c:"angka"},
+{j:"百",k:"ひゃく",r:"hyaku",i:"seratus",e:"one hundred",c:"angka"},
+{j:"千",k:"せん",r:"sen",i:"seribu",e:"one thousand",c:"angka"},
+{j:"万",k:"まん",r:"man",i:"sepuluh ribu",e:"ten thousand",c:"angka"},
+{j:"円",k:"えん",r:"en",i:"yen",e:"yen",c:"angka"},
+{j:"今日",k:"きょう",r:"kyou",i:"hari ini",e:"today",c:"waktu"},
+{j:"明日",k:"あした",r:"ashita",i:"besok",e:"tomorrow",c:"waktu"},
+{j:"昨日",k:"きのう",r:"kinou",i:"kemarin",e:"yesterday",c:"waktu"},
+{j:"今",k:"いま",r:"ima",i:"sekarang",e:"now",c:"waktu"},
+{j:"朝",k:"あさ",r:"asa",i:"pagi",e:"morning",c:"waktu"},
+{j:"昼",k:"ひる",r:"hiru",i:"siang",e:"noon",c:"waktu"},
+{j:"夜",k:"よる",r:"yoru",i:"malam",e:"night",c:"waktu"},
+{j:"午前",k:"ごぜん",r:"gozen",i:"pagi hari (AM)",e:"morning (AM)",c:"waktu"},
+{j:"午後",k:"ごご",r:"gogo",i:"sore hari (PM)",e:"afternoon (PM)",c:"waktu"},
+{j:"週",k:"しゅう",r:"shuu",i:"minggu",e:"week",c:"waktu"},
+{j:"月",k:"つき",r:"tsuki",i:"bulan",e:"moon / month",c:"waktu"},
+{j:"年",k:"とし",r:"toshi",i:"tahun",e:"year",c:"waktu"},
+{j:"時間",k:"じかん",r:"jikan",i:"waktu / jam",e:"time / hour",c:"waktu"},
+{j:"毎日",k:"まいにち",r:"mainichi",i:"setiap hari",e:"every day",c:"waktu"},
+{j:"父",k:"ちち",r:"chichi",i:"ayah",e:"father",c:"keluarga"},
+{j:"母",k:"はは",r:"haha",i:"ibu",e:"mother",c:"keluarga"},
+{j:"兄",k:"あに",r:"ani",i:"kakak laki-laki",e:"older brother",c:"keluarga"},
+{j:"姉",k:"あね",r:"ane",i:"kakak perempuan",e:"older sister",c:"keluarga"},
+{j:"弟",k:"おとうと",r:"otouto",i:"adik laki-laki",e:"younger brother",c:"keluarga"},
+{j:"妹",k:"いもうと",r:"imouto",i:"adik perempuan",e:"younger sister",c:"keluarga"},
+{j:"家族",k:"かぞく",r:"kazoku",i:"keluarga",e:"family",c:"keluarga"},
+{j:"友達",k:"ともだち",r:"tomodachi",i:"teman",e:"friend",c:"keluarga"},
+{j:"子供",k:"こども",r:"kodomo",i:"anak",e:"child",c:"keluarga"},
+{j:"人",k:"ひと",r:"hito",i:"orang",e:"person",c:"keluarga"},
+{j:"水",k:"みず",r:"mizu",i:"air",e:"water",c:"makanan"},
+{j:"お茶",k:"おちゃ",r:"ocha",i:"teh",e:"tea",c:"makanan"},
+{j:"コーヒー",k:"コーヒー",r:"koohii",i:"kopi",e:"coffee",c:"makanan"},
+{j:"ご飯",k:"ごはん",r:"gohan",i:"nasi / makan",e:"rice / meal",c:"makanan"},
+{j:"パン",k:"パン",r:"pan",i:"roti",e:"bread",c:"makanan"},
+{j:"肉",k:"にく",r:"niku",i:"daging",e:"meat",c:"makanan"},
+{j:"魚",k:"さかな",r:"sakana",i:"ikan",e:"fish",c:"makanan"},
+{j:"野菜",k:"やさい",r:"yasai",i:"sayuran",e:"vegetables",c:"makanan"},
+{j:"果物",k:"くだもの",r:"kudamono",i:"buah",e:"fruit",c:"makanan"},
+{j:"りんご",k:"りんご",r:"ringo",i:"apel",e:"apple",c:"makanan"},
+{j:"卵",k:"たまご",r:"tamago",i:"telur",e:"egg",c:"makanan"},
+{j:"牛乳",k:"ぎゅうにゅう",r:"gyuunyuu",i:"susu",e:"milk",c:"makanan"},
+{j:"ビール",k:"ビール",r:"biiru",i:"bir",e:"beer",c:"makanan"},
+{j:"ジュース",k:"ジュース",r:"juusu",i:"jus",e:"juice",c:"makanan"},
+{j:"塩",k:"しお",r:"shio",i:"garam",e:"salt",c:"makanan"},
+{j:"砂糖",k:"さとう",r:"satou",i:"gula",e:"sugar",c:"makanan"},
+{j:"レストラン",k:"レストラン",r:"resutoran",i:"restoran",e:"restaurant",c:"makanan"},
+{j:"おいしい",k:"おいしい",r:"oishii",i:"enak",e:"delicious",c:"makanan"},
+{j:"お菓子",k:"おかし",r:"okashi",i:"camilan",e:"snack",c:"makanan"},
+{j:"お酒",k:"おさけ",r:"osake",i:"minuman beralkohol",e:"alcohol",c:"makanan"},
+{j:"空港",k:"くうこう",r:"kuukou",i:"bandara",e:"airport",c:"perjalanan"},
+{j:"飛行機",k:"ひこうき",r:"hikouki",i:"pesawat",e:"airplane",c:"perjalanan"},
+{j:"電車",k:"でんしゃ",r:"densha",i:"kereta",e:"train",c:"perjalanan"},
+{j:"駅",k:"えき",r:"eki",i:"stasiun",e:"station",c:"perjalanan"},
+{j:"バス",k:"バス",r:"basu",i:"bus",e:"bus",c:"perjalanan"},
+{j:"タクシー",k:"タクシー",r:"takushii",i:"taksi",e:"taxi",c:"perjalanan"},
+{j:"切符",k:"きっぷ",r:"kippu",i:"tiket",e:"ticket",c:"perjalanan"},
+{j:"パスポート",k:"パスポート",r:"pasupooto",i:"paspor",e:"passport",c:"perjalanan"},
+{j:"荷物",k:"にもつ",r:"nimotsu",i:"bagasi",e:"luggage",c:"perjalanan"},
+{j:"ホテル",k:"ホテル",r:"hoteru",i:"hotel",e:"hotel",c:"perjalanan"},
+{j:"地図",k:"ちず",r:"chizu",i:"peta",e:"map",c:"perjalanan"},
+{j:"道",k:"みち",r:"michi",i:"jalan",e:"road",c:"perjalanan"},
+{j:"右",k:"みぎ",r:"migi",i:"kanan",e:"right",c:"perjalanan"},
+{j:"左",k:"ひだり",r:"hidari",i:"kiri",e:"left",c:"perjalanan"},
+{j:"北",k:"きた",r:"kita",i:"utara",e:"north",c:"perjalanan"},
+{j:"南",k:"みなみ",r:"minami",i:"selatan",e:"south",c:"perjalanan"},
+{j:"東",k:"ひがし",r:"higashi",i:"timur",e:"east",c:"perjalanan"},
+{j:"西",k:"にし",r:"nishi",i:"barat",e:"west",c:"perjalanan"},
+{j:"近い",k:"ちかい",r:"chikai",i:"dekat",e:"near",c:"perjalanan"},
+{j:"遠い",k:"とおい",r:"tooi",i:"jauh",e:"far",c:"perjalanan"},
+{j:"部屋",k:"へや",r:"heya",i:"kamar",e:"room",c:"hotel"},
+{j:"鍵",k:"かぎ",r:"kagi",i:"kunci",e:"key",c:"hotel"},
+{j:"朝ご飯",k:"あさごはん",r:"asagohan",i:"sarapan",e:"breakfast",c:"hotel"},
+{j:"晩ご飯",k:"ばんごはん",r:"bangohan",i:"makan malam",e:"dinner",c:"hotel"},
+{j:"昼ご飯",k:"ひるごはん",r:"hirugohan",i:"makan siang",e:"lunch",c:"hotel"},
+{j:"チェックイン",k:"チェックイン",r:"chekkuin",i:"check-in",e:"check-in",c:"hotel"},
+{j:"チェックアウト",k:"チェックアウト",r:"chekkuauto",i:"check-out",e:"check-out",c:"hotel"},
+{j:"予約",k:"よやく",r:"yoyaku",i:"reservasi",e:"reservation",c:"hotel"},
+{j:"お風呂",k:"おふろ",r:"ofuro",i:"kamar mandi / bak mandi",e:"bath",c:"hotel"},
+{j:"トイレ",k:"トイレ",r:"toire",i:"toilet",e:"toilet",c:"hotel"},
+{j:"メニュー",k:"メニュー",r:"menyuu",i:"menu",e:"menu",c:"restoran"},
+{j:"注文",k:"ちゅうもん",r:"chuumon",i:"pesanan",e:"order",c:"restoran"},
+{j:"お会計",k:"おかいけい",r:"okaikei",i:"tagihan",e:"bill / check",c:"restoran"},
+{j:"すこし",k:"すこし",r:"sukoshi",i:"sedikit",e:"a little",c:"restoran"},
+{j:"たくさん",k:"たくさん",r:"takusan",i:"banyak",e:"a lot",c:"restoran"},
+{j:"お願いします",k:"おねがいします",r:"onegai shimasu",i:"tolong",e:"please (request)",c:"restoran"},
+{j:"学校",k:"がっこう",r:"gakkou",i:"sekolah",e:"school",c:"tempat"},
+{j:"病院",k:"びょういん",r:"byouin",i:"rumah sakit",e:"hospital",c:"tempat"},
+{j:"銀行",k:"ぎんこう",r:"ginkou",i:"bank",e:"bank",c:"tempat"},
+{j:"店",k:"みせ",r:"mise",i:"toko",e:"shop",c:"tempat"},
+{j:"会社",k:"かいしゃ",r:"kaisha",i:"perusahaan",e:"company",c:"tempat"},
+{j:"家",k:"いえ",r:"ie",i:"rumah",e:"house / home",c:"tempat"},
+{j:"日本",k:"にほん",r:"nihon",i:"Jepang",e:"Japan",c:"tempat"},
+{j:"インドネシア",k:"インドネシア",r:"indoneshia",i:"Indonesia",e:"Indonesia",c:"tempat"},
+{j:"外国",k:"がいこく",r:"gaikoku",i:"luar negeri",e:"foreign country",c:"tempat"},
+{j:"山",k:"やま",r:"yama",i:"gunung",e:"mountain",c:"tempat"},
+{j:"川",k:"かわ",r:"kawa",i:"sungai",e:"river",c:"tempat"},
+{j:"海",k:"うみ",r:"umi",i:"laut",e:"sea",c:"tempat"},
+{j:"空",k:"そら",r:"sora",i:"langit",e:"sky",c:"tempat"},
+{j:"天気",k:"てんき",r:"tenki",i:"cuaca",e:"weather",c:"tempat"},
+{j:"雨",k:"あめ",r:"ame",i:"hujan",e:"rain",c:"tempat"},
+{j:"雪",k:"ゆき",r:"yuki",i:"salju",e:"snow",c:"tempat"},
+{j:"お金",k:"おかね",r:"okane",i:"uang",e:"money",c:"belanja"},
+{j:"安い",k:"やすい",r:"yasui",i:"murah",e:"cheap",c:"belanja"},
+{j:"高い",k:"たかい",r:"takai",i:"mahal / tinggi",e:"expensive / tall",c:"belanja"},
+{j:"値段",k:"ねだん",r:"nedan",i:"harga",e:"price",c:"belanja"},
+{j:"いくら",k:"いくら",r:"ikura",i:"berapa (harga)",e:"how much",c:"belanja"},
+{j:"払う",k:"はらう",r:"harau",i:"membayar",e:"to pay",c:"belanja"},
+{j:"売る",k:"うる",r:"uru",i:"menjual",e:"to sell",c:"belanja"},
+{j:"助けて",k:"たすけて",r:"tasukete",i:"tolong!",e:"Help!",c:"darurat"},
+{j:"危ない",k:"あぶない",r:"abunai",i:"berbahaya",e:"dangerous",c:"darurat"},
+{j:"病気",k:"びょうき",r:"byouki",i:"sakit",e:"sick / illness",c:"darurat"},
+{j:"薬",k:"くすり",r:"kusuri",i:"obat",e:"medicine",c:"darurat"},
+{j:"医者",k:"いしゃ",r:"isha",i:"dokter",e:"doctor",c:"darurat"},
+{j:"痛い",k:"いたい",r:"itai",i:"sakit (nyeri)",e:"painful",c:"darurat"},
+{j:"大丈夫",k:"だいじょうぶ",r:"daijoubu",i:"tidak apa-apa",e:"it's okay / alright",c:"darurat"},
+{j:"警察",k:"けいさつ",r:"keisatsu",i:"polisi",e:"police",c:"darurat"},
+{j:"救急車",k:"きゅうきゅうしゃ",r:"kyuukyuusha",i:"ambulans",e:"ambulance",c:"darurat"},
+{j:"行く",k:"いく",r:"iku",i:"pergi",e:"to go",c:"kerja"},
+{j:"来る",k:"くる",r:"kuru",i:"datang",e:"to come",c:"kerja"},
+{j:"帰る",k:"かえる",r:"kaeru",i:"pulang",e:"to return home",c:"kerja"},
+{j:"会う",k:"あう",r:"au",i:"bertemu",e:"to meet",c:"kerja"},
+{j:"話す",k:"はなす",r:"hanasu",i:"berbicara",e:"to speak",c:"kerja"},
+{j:"聞く",k:"きく",r:"kiku",i:"mendengar / bertanya",e:"to listen / to ask",c:"kerja"},
+{j:"読む",k:"よむ",r:"yomu",i:"membaca",e:"to read",c:"kerja"},
+{j:"書く",k:"かく",r:"kaku",i:"menulis",e:"to write",c:"kerja"},
+{j:"見る",k:"みる",r:"miru",i:"melihat",e:"to see / watch",c:"kerja"},
+{j:"食べる",k:"たべる",r:"taberu",i:"makan",e:"to eat",c:"kerja"},
+{j:"飲む",k:"のむ",r:"nomu",i:"minum",e:"to drink",c:"kerja"},
+{j:"買う",k:"かう",r:"kau",i:"membeli",e:"to buy",c:"kerja"},
+{j:"寝る",k:"ねる",r:"neru",i:"tidur",e:"to sleep",c:"kerja"},
+{j:"起きる",k:"おきる",r:"okiru",i:"bangun",e:"to wake up",c:"kerja"},
+{j:"働く",k:"はたらく",r:"hataraku",i:"bekerja",e:"to work",c:"kerja"},
+{j:"勉強する",k:"べんきょうする",r:"benkyou suru",i:"belajar",e:"to study",c:"kerja"},
+{j:"住む",k:"すむ",r:"sumu",i:"tinggal",e:"to live",c:"kerja"},
+{j:"知る",k:"しる",r:"shiru",i:"tahu",e:"to know",c:"kerja"},
+{j:"分かる",k:"わかる",r:"wakaru",i:"mengerti",e:"to understand",c:"kerja"},
+{j:"する",k:"する",r:"suru",i:"melakukan",e:"to do",c:"kerja"},
+{j:"なる",k:"なる",r:"naru",i:"menjadi",e:"to become",c:"kerja"},
+{j:"ある",k:"ある",r:"aru",i:"ada (benda)",e:"to exist (things)",c:"kerja"},
+{j:"いる",k:"いる",r:"iru",i:"ada (makhluk)",e:"to exist (living)",c:"kerja"},
+{j:"歩く",k:"あるく",r:"aruku",i:"berjalan",e:"to walk",c:"kerja"},
+{j:"走る",k:"はしる",r:"hashiru",i:"berlari",e:"to run",c:"kerja"},
+{j:"座る",k:"すわる",r:"suwaru",i:"duduk",e:"to sit",c:"kerja"},
+{j:"立つ",k:"たつ",r:"tatsu",i:"berdiri",e:"to stand",c:"kerja"},
+{j:"入る",k:"はいる",r:"hairu",i:"masuk",e:"to enter",c:"kerja"},
+{j:"出る",k:"でる",r:"deru",i:"keluar",e:"to go out",c:"kerja"},
+{j:"開ける",k:"あける",r:"akeru",i:"membuka",e:"to open",c:"kerja"},
+{j:"閉める",k:"しめる",r:"shimeru",i:"menutup",e:"to close",c:"kerja"},
+{j:"教える",k:"おしえる",r:"oshieru",i:"mengajar / memberi tahu",e:"to teach / tell",c:"kerja"},
+{j:"忘れる",k:"わすれる",r:"wasureru",i:"lupa",e:"to forget",c:"kerja"},
+{j:"思う",k:"おもう",r:"omou",i:"berpikir",e:"to think",c:"kerja"},
+{j:"大きい",k:"おおきい",r:"ookii",i:"besar",e:"big",c:"sifat"},
+{j:"小さい",k:"ちいさい",r:"chiisai",i:"kecil",e:"small",c:"sifat"},
+{j:"新しい",k:"あたらしい",r:"atarashii",i:"baru",e:"new",c:"sifat"},
+{j:"古い",k:"ふるい",r:"furui",i:"lama",e:"old",c:"sifat"},
+{j:"暑い",k:"あつい",r:"atsui",i:"panas (cuaca)",e:"hot",c:"sifat"},
+{j:"寒い",k:"さむい",r:"samui",i:"dingin (cuaca)",e:"cold",c:"sifat"},
+{j:"忙しい",k:"いそがしい",r:"isogashii",i:"sibuk",e:"busy",c:"sifat"},
+{j:"楽しい",k:"たのしい",r:"tanoshii",i:"menyenangkan",e:"fun",c:"sifat"},
+{j:"難しい",k:"むずかしい",r:"muzukashii",i:"sulit",e:"difficult",c:"sifat"},
+{j:"易しい",k:"やさしい",r:"yasashii",i:"mudah / baik hati",e:"easy / kind",c:"sifat"},
+{j:"早い",k:"はやい",r:"hayai",i:"cepat / pagi",e:"fast / early",c:"sifat"},
+{j:"遅い",k:"おそい",r:"osoi",i:"lambat / terlambat",e:"slow / late",c:"sifat"},
+{j:"長い",k:"ながい",r:"nagai",i:"panjang",e:"long",c:"sifat"},
+{j:"短い",k:"みじかい",r:"mijikai",i:"pendek",e:"short",c:"sifat"},
+{j:"きれい",k:"きれい",r:"kirei",i:"cantik / bersih",e:"beautiful / clean",c:"sifat"},
+{j:"有名",k:"ゆうめい",r:"yuumei",i:"terkenal",e:"famous",c:"sifat"},
+{j:"元気",k:"げんき",r:"genki",i:"sehat / bersemangat",e:"healthy / energetic",c:"sifat"},
+{j:"静か",k:"しずか",r:"shizuka",i:"tenang",e:"quiet",c:"sifat"},
+{j:"本",k:"ほん",r:"hon",i:"buku",e:"book",c:"benda"},
+{j:"電話",k:"でんわ",r:"denwa",i:"telepon",e:"telephone",c:"benda"},
+{j:"車",k:"くるま",r:"kuruma",i:"mobil",e:"car",c:"benda"},
+{j:"自転車",k:"じてんしゃ",r:"jitensha",i:"sepeda",e:"bicycle",c:"benda"},
+{j:"鞄",k:"かばん",r:"kaban",i:"tas",e:"bag",c:"benda"},
+{j:"眼鏡",k:"めがね",r:"megane",i:"kacamata",e:"glasses",c:"benda"},
+{j:"写真",k:"しゃしん",r:"shashin",i:"foto",e:"photo",c:"benda"},
+{j:"映画",k:"えいが",r:"eiga",i:"film",e:"movie",c:"benda"},
+{j:"音楽",k:"おんがく",r:"ongaku",i:"musik",e:"music",c:"benda"},
+{j:"歌",k:"うた",r:"uta",i:"lagu",e:"song",c:"benda"},
+{j:"仕事",k:"しごと",r:"shigoto",i:"pekerjaan",e:"work / job",c:"benda"}
+];
+const CATS={sapaan:"👋 Sapaan & dasar",angka:"🔢 Angka",waktu:"🕐 Waktu",keluarga:"👨‍👩‍👧 Keluarga",makanan:"🍜 Makanan & minuman",perjalanan:"✈️ Bandara & perjalanan",hotel:"🏨 Hotel",restoran:"🍽️ Restoran",tempat:"📍 Tempat & alam",belanja:"🛍️ Belanja & uang",darurat:"🚨 Darurat & kesehatan",kerja:"🏃 Kata kerja",sifat:"✨ Kata sifat",benda:"📦 Kata benda umum"};
+
+/* ================= DATA: FRASA PERJALANAN ================= */
+const PHRASES=[
+{j:"おはようございます",k:"おはようございます",r:"ohayou gozaimasu",i:"Selamat pagi",e:"Good morning",c:"sapaan"},
+{j:"こんにちは",k:"こんにちは",r:"konnichiwa",i:"Halo, selamat siang",e:"Hello, good afternoon",c:"sapaan"},
+{j:"こんばんは",k:"こんばんは",r:"konbanwa",i:"Selamat malam",e:"Good evening",c:"sapaan"},
+{j:"はじめまして。わたしはダニエルです。",k:"はじめまして。わたしはダニエルです。",r:"hajimemashite. watashi wa danieru desu.",i:"Senang bertemu denganmu. Saya Daniel.",e:"Nice to meet you. I'm Daniel.",c:"sapaan"},
+{j:"おげんきですか",k:"おげんきですか",r:"ogenki desu ka",i:"Apa kabar?",e:"How are you?",c:"sapaan"},
+{j:"げんきです、ありがとう",k:"げんきです、ありがとう",r:"genki desu, arigatou",i:"Saya baik, terima kasih",e:"I'm fine, thank you",c:"sapaan"},
+{j:"さようなら",k:"さようなら",r:"sayounara",i:"Sampai jumpa",e:"Goodbye",c:"sapaan"},
+{j:"またあした",k:"またあした",r:"mata ashita",i:"Sampai besok",e:"See you tomorrow",c:"sapaan"},
+{j:"チェックインをおねがいします",k:"チェックインをおねがいします",r:"chekkuin o onegai shimasu",i:"Tolong check-in",e:"Check-in, please",c:"bandara"},
+{j:"パスポートはここです",k:"パスポートはここです",r:"pasupooto wa koko desu",i:"Ini paspor saya",e:"Here is my passport",c:"bandara"},
+{j:"荷物はひとつだけです",k:"にもつはひとつだけです",r:"nimotsu wa hitotsu dake desu",i:"Bagasi saya hanya satu",e:"I have only one bag",c:"bandara"},
+{j:"飛行機は何時に出発しますか",k:"ひこうきはなんじにしゅっぱつしますか",r:"hikouki wa nanji ni shuppatsu shimasu ka",i:"Pesawat berangkat jam berapa?",e:"What time does the plane depart?",c:"bandara"},
+{j:"搭乗口はどこですか",k:"とうじょうぐちはどこですか",r:"toujouguchi wa doko desu ka",i:"Gerbang keberangkatan di mana?",e:"Where is the boarding gate?",c:"bandara"},
+{j:"遅れていますか",k:"おくれていますか",r:"okurete imasu ka",i:"Apakah terlambat?",e:"Is it delayed?",c:"bandara"},
+{j:"窓側の席をおねがいします",k:"まどがわのせきをおねがいします",r:"madogawa no seki o onegai shimasu",i:"Saya minta kursi dekat jendela",e:"A window seat, please",c:"bandara"},
+{j:"トイレはどこですか",k:"トイレはどこですか",r:"toire wa doko desu ka",i:"Toilet di mana?",e:"Where is the toilet?",c:"bandara"},
+{j:"予約しています",k:"よやくしています",r:"yoyaku shite imasu",i:"Saya sudah reservasi",e:"I have a reservation",c:"hotel"},
+{j:"部屋の鍵をください",k:"へやのかぎをください",r:"heya no kagi o kudasai",i:"Tolong kunci kamarnya",e:"The room key, please",c:"hotel"},
+{j:"朝ご飯は何時からですか",k:"あさごはんはなんじからですか",r:"asagohan wa nanji kara desu ka",i:"Sarapan mulai jam berapa?",e:"What time does breakfast start?",c:"hotel"},
+{j:"チェックアウトは何時までですか",k:"チェックアウトはなんじまでですか",r:"chekkuauto wa nanji made desu ka",i:"Check-out sampai jam berapa?",e:"Until what time is check-out?",c:"hotel"},
+{j:"お風呂はどこですか",k:"おふろはどこですか",r:"ofuro wa doko desu ka",i:"Kamar mandi di mana?",e:"Where is the bath?",c:"hotel"},
+{j:"タオルをください",k:"タオルをください",r:"taoru o kudasai",i:"Tolong handuk",e:"A towel, please",c:"hotel"},
+{j:"エアコンが壊れています",k:"エアコンがこわれています",r:"eakon ga kowarete imasu",i:"AC-nya rusak",e:"The air conditioner is broken",c:"hotel"},
+{j:"メニューをください",k:"メニューをください",r:"menyuu o kudasai",i:"Tolong menunya",e:"The menu, please",c:"restoran"},
+{j:"これをください",k:"これをください",r:"kore o kudasai",i:"Saya mau yang ini",e:"This one, please",c:"restoran"},
+{j:"水をください",k:"みずをください",r:"mizu o kudasai",i:"Tolong air putih",e:"Water, please",c:"restoran"},
+{j:"お会計をおねがいします",k:"おかいけいをおねがいします",r:"okaikei o onegai shimasu",i:"Tolong tagihannya",e:"The bill, please",c:"restoran"},
+{j:"おいしいです",k:"おいしいです",r:"oishii desu",i:"Enak",e:"It's delicious",c:"restoran"},
+{j:"もうすこしください",k:"もうすこしください",r:"mou sukoshi kudasai",i:"Tolong tambah sedikit",e:"A little more, please",c:"restoran"},
+{j:"辛くないものはありますか",k:"からくないものはありますか",r:"karakunai mono wa arimasu ka",i:"Ada yang tidak pedas?",e:"Is there something not spicy?",c:"restoran"},
+{j:"お箸をください",k:"おはしをください",r:"ohashi o kudasai",i:"Tolong sumpit",e:"Chopsticks, please",c:"restoran"},
+{j:"駅はどこですか",k:"えきはどこですか",r:"eki wa doko desu ka",i:"Stasiun di mana?",e:"Where is the station?",c:"arah"},
+{j:"右に曲がってください",k:"みぎにまがってください",r:"migi ni magatte kudasai",i:"Belok kanan",e:"Turn right",c:"arah"},
+{j:"左に曲がってください",k:"ひだりにまがってください",r:"hidari ni magatte kudasai",i:"Belok kiri",e:"Turn left",c:"arah"},
+{j:"まっすぐ行ってください",k:"まっすぐいってください",r:"massugu itte kudasai",i:"Jalan lurus",e:"Go straight",c:"arah"},
+{j:"ここはどこですか",k:"ここはどこですか",r:"koko wa doko desu ka",i:"Ini di mana?",e:"Where is this?",c:"arah"},
+{j:"近いですか",k:"ちかいですか",r:"chikai desu ka",i:"Apakah dekat?",e:"Is it near?",c:"arah"},
+{j:"タクシーを呼んでください",k:"タクシーをよんでください",r:"takushii o yonde kudasai",i:"Tolong panggilkan taksi",e:"Please call a taxi",c:"arah"},
+{j:"いくらですか",k:"いくらですか",r:"ikura desu ka",i:"Berapa harganya?",e:"How much is it?",c:"belanja"},
+{j:"安くしてください",k:"やすくしてください",r:"yasuku shite kudasai",i:"Tolong lebih murah",e:"Please make it cheaper",c:"belanja"},
+{j:"これを見せてください",k:"これをみせてください",r:"kore o misete kudasai",i:"Tolong tunjukkan yang ini",e:"Please show me this one",c:"belanja"},
+{j:"カードで払えますか",k:"カードではらえますか",r:"kaado de haraemasu ka",i:"Bisa bayar pakai kartu?",e:"Can I pay by card?",c:"belanja"},
+{j:"袋をください",k:"ふくろをください",r:"fukuro o kudasai",i:"Tolong kantongnya",e:"A bag, please",c:"belanja"},
+{j:"買います",k:"かいます",r:"kaimasu",i:"Saya beli",e:"I'll buy it",c:"belanja"},
+{j:"助けてください",k:"たすけてください",r:"tasukete kudasai",i:"Tolong!",e:"Help me, please!",c:"darurat"},
+{j:"救急車を呼んでください",k:"きゅうきゅうしゃをよんでください",r:"kyuukyuusha o yonde kudasai",i:"Tolong panggil ambulans",e:"Please call an ambulance",c:"darurat"},
+{j:"病院はどこですか",k:"びょういんはどこですか",r:"byouin wa doko desu ka",i:"Rumah sakit di mana?",e:"Where is the hospital?",c:"darurat"},
+{j:"具合が悪いです",k:"ぐあいがわるいです",r:"guai ga warui desu",i:"Saya merasa tidak enak badan",e:"I feel sick",c:"darurat"},
+{j:"日本語がわかりません",k:"にほんごがわかりません",r:"nihongo ga wakarimasen",i:"Saya tidak mengerti bahasa Jepang",e:"I don't understand Japanese",c:"darurat"},
+{j:"英語を話せますか",k:"えいごをはなせますか",r:"eigo o hanasemasu ka",i:"Bisakah Anda berbahasa Inggris?",e:"Can you speak English?",c:"darurat"},
+{j:"警察を呼んでください",k:"けいさつをよんでください",r:"keisatsu o yonde kudasai",i:"Tolong panggil polisi",e:"Please call the police",c:"darurat"}
+];
+const PHRASE_CATS={sapaan:"👋 Sapaan",bandara:"✈️ Bandara",hotel:"🏨 Hotel",restoran:"🍽️ Restoran",arah:"🧭 Arah jalan",belanja:"🛍️ Belanja",darurat:"🚨 Darurat"};
+/* ================= DATA: KANA ================= */
+const HIRA=[["あ","a"],["い","i"],["う","u"],["え","e"],["お","o"],["か","ka"],["き","ki"],["く","ku"],["け","ke"],["こ","ko"],["さ","sa"],["し","shi"],["す","su"],["せ","se"],["そ","so"],["た","ta"],["ち","chi"],["つ","tsu"],["て","te"],["と","to"],["な","na"],["に","ni"],["ぬ","nu"],["ね","ne"],["の","no"],["は","ha"],["ひ","hi"],["ふ","fu"],["へ","he"],["ほ","ho"],["ま","ma"],["み","mi"],["む","mu"],["め","me"],["も","mo"],["や","ya"],["ゆ","yu"],["よ","yo"],["ら","ra"],["り","ri"],["る","ru"],["れ","re"],["ろ","ro"],["わ","wa"],["を","wo"],["ん","n"]];
+const HIRA_DAKU=[["が","ga"],["ぎ","gi"],["ぐ","gu"],["げ","ge"],["ご","go"],["ざ","za"],["じ","ji"],["ず","zu"],["ぜ","ze"],["ぞ","zo"],["だ","da"],["ぢ","ji"],["づ","zu"],["で","de"],["ど","do"],["ば","ba"],["び","bi"],["ぶ","bu"],["べ","be"],["ぼ","bo"],["ぱ","pa"],["ぴ","pi"],["ぷ","pu"],["ぺ","pe"],["ぽ","po"]];
+const KATA=[["ア","a"],["イ","i"],["ウ","u"],["エ","e"],["オ","o"],["カ","ka"],["キ","ki"],["ク","ku"],["ケ","ke"],["コ","ko"],["サ","sa"],["シ","shi"],["ス","su"],["セ","se"],["ソ","so"],["タ","ta"],["チ","chi"],["ツ","tsu"],["テ","te"],["ト","to"],["ナ","na"],["ニ","ni"],["ヌ","nu"],["ネ","ne"],["ノ","no"],["ハ","ha"],["ヒ","hi"],["フ","fu"],["ヘ","he"],["ホ","ho"],["マ","ma"],["ミ","mi"],["ム","mu"],["メ","me"],["モ","mo"],["ヤ","ya"],["ユ","yu"],["ヨ","yo"],["ラ","ra"],["リ","ri"],["ル","ru"],["レ","re"],["ロ","ro"],["ワ","wa"],["ヲ","wo"],["ン","n"]];
+const KATA_DAKU=[["ガ","ga"],["ギ","gi"],["グ","gu"],["ゲ","ge"],["ゴ","go"],["ザ","za"],["ジ","ji"],["ズ","zu"],["ゼ","ze"],["ゾ","zo"],["ダ","da"],["ヂ","ji"],["ヅ","zu"],["デ","de"],["ド","do"],["バ","ba"],["ビ","bi"],["ブ","bu"],["ベ","be"],["ボ","bo"],["パ","pa"],["ピ","pi"],["プ","pu"],["ペ","pe"],["ポ","po"]];
+/* ================= DATA: SOAL TATA BAHASA (ditulis tangan, 10 soal per pelajaran) ================= */
+const GRAMMAR={
+g1:[
+{t:"mc",q:"Apa arti dari kalimat “わたしは ダニエルです”?",o:["Saya adalah Daniel","Daniel pergi","Ini buku Daniel","Daniel makan"],a:0,note:"“わたしは” = saya, “です” = adalah (sopan)."},
+{t:"fill",s:"これは 本 ___。",o:["です","ます","でした","だ"],a:0,note:"“です” dipakai di akhir kalimat benda (kata benda)."},
+{t:"fill",s:"わたしは 毎日 日本語を 勉強 ___。",o:["します","です","でした","する"],a:0,note:"“します” adalah bentuk sopan dari “する” (melakukan)."},
+{t:"mc",q:"Kalimat mana yang BENAR?",o:["わたしは 学生です。","わたしは 学生ます。","わたしは 学生でしたです。","わたしは 学生する。"],a:0,note:"Kata benda + “です”. “ます” hanya untuk kata kerja."},
+{t:"arrange",w:["わたし","は","ダニエル","です"],note:"Susunan dasar: Subjek + は + … + です。"},
+{t:"mc",q:"“ます” dipakai untuk apa?",o:["Membuat kata kerja jadi sopan","Membuat kata benda jadi jamak","Menanyakan sesuatu","Menyatakan masa lalu"],a:0,note:"Contoh: 食べます (makan, sopan), 行きます (pergi, sopan)."},
+{t:"fill",s:"明日、学校に 行き ___。",o:["ます","です","ました","でした"],a:0,note:"“行きます” = pergi (sopan, masa kini/akan datang)."},
+{t:"mc",q:"Apa arti “ありがとうございます”?",o:["Terima kasih banyak","Selamat pagi","Maaf","Sampai jumpa"],a:0,note:"Bentuk sopan dari “ありがとう”. “ございます” = bentuk sopan “あります”. "},
+{t:"arrange",w:["これ","は","水","です"],note:"これ = ini (dekat pembicara)."},
+{t:"fill",s:"それは 本 ___か。",o:["です","ます","でした","する"],a:0,note:"Pertanyaan sopan: “…ですか” = apakah …?"}],
+g2:[
+{t:"mc",q:"Apa fungsi partikel “は” (dibaca “wa”)?",o:["Menandai topik kalimat","Menandai tempat","Menandai alat","Menandai tujuan"],a:0,note:"は = topik: “tentang …”. Contoh: わたしはダニエルです。"},
+{t:"fill",s:"わたし ___ ダニエルです。",o:["は","が","を","に"],a:0,note:"Topik “わたし” (saya) ditandai は. "},
+{t:"mc",q:"Kapan “が” dipakai?",o:["Menandai subjek, sering untuk hal baru atau penekanan","Menandai waktu","Menandai alat","Menandai arah"],a:0,note:"Contoh: 雨が降ります (hujan turun) — subjek baru."},
+{t:"fill",s:"本 ___ あります。",o:["が","は","を","で"],a:0,note:"“本があります” = ada buku. Subjek keberadaan memakai が. "},
+{t:"mc",q:"Apa arti “水があります”?",o:["Ada air","Saya minum air","Airnya dingin","Tolong air"],a:0,note:"あります = ada (untuk benda). が menandai “air” sebagai subjek."},
+{t:"fill",s:"だれ ___ 来ましたか。",o:["が","は","を","に"],a:0,note:"Kata tanya (だれ = siapa) sebagai subjek memakai が. "},
+{t:"arrange",w:["わたし","は","日本人","です"],note:"“日本人” (にほんじん) = orang Jepang. Pola: XはYです。"},
+{t:"mc",q:"Bedanya は dan が secara sederhana?",o:["は = topik yang sudah dibicarakan, が = subjek baru/penekanan","は = masa lalu, が = masa kini","は = jamak, が = tunggal","Tidak ada bedanya"],a:0,note:"Contoh: わたしは学生です (topik: saya) vs だれが来ましたか (subjek: siapa)."},
+{t:"fill",s:"これ ___ わたしの本です。",o:["は","が","を","に"],a:0,note:"“これ” (ini) sebagai topik → は. "},
+{t:"mc",q:"Kalimat mana yang memakai が dengan benar?",o:["雨が降ります。","わたしがダニエルですは。","本をがあります。","水がです。"],a:0,note:"雨 (あめ) = hujan, 降ります = turun. Subjek “hujan” memakai が."}],
+g3:[
+{t:"mc",q:"Apa fungsi partikel “を” (dibaca “o”)?",o:["Menandai objek dari kata kerja","Menandai tempat","Menandai waktu","Menandai subjek"],a:0,note:"Contoh: 本を読みます (membaca buku)."},
+{t:"fill",s:"本 ___ 読みます。",o:["を","に","で","は"],a:0,note:"“本” (buku) adalah objek dari “読む” (membaca) → を. "},
+{t:"fill",s:"水 ___ 飲みます。",o:["を","が","で","は"],a:0,note:"“水” adalah objek dari “飲む” (minum) → を. "},
+{t:"mc",q:"Apa fungsi partikel “に” di “学校に行きます”?",o:["Menandai tujuan / arah","Menandai alat","Menandai subjek","Menandai waktu"],a:0,note:"“に” = ke (tujuan). 学校に行きます = pergi ke sekolah."},
+{t:"fill",s:"明日、日本 ___ 行きます。",o:["に","を","で","が"],a:0,note:"Tujuan “日本” (Jepang) → に. "},
+{t:"mc",q:"Apa fungsi partikel “で” di “家で勉強します”?",o:["Menandai tempat kegiatan","Menandai tujuan","Menandai objek","Menandai subjek"],a:0,note:"“で” = di (tempat beraktivitas). 家で = di rumah."},
+{t:"fill",s:"レストラン ___ ご飯を食べます。",o:["で","に","を","が"],a:0,note:"Tempat makan → で. "},
+{t:"arrange",w:["わたし","は","水","を","飲みます"],note:"Pola: Subjek は Objek を Kata kerja."},
+{t:"mc",q:"Kalimat mana yang BENAR?",o:["学校に行きます。","学校をに行きます。","学校でに行きます。","学校がに行きます。"],a:0,note:"Tujuan memakai に. "},
+{t:"fill",s:"毎朝、家 ___ ご飯を食べます。",o:["で","に","を","は"],a:0,note:"Tempat kegiatan makan di rumah → で. "}],
+g4:[
+{t:"mc",q:"Kata sifat-i (い-keiyoushi) cirinya apa?",o:["Berakhiran い sebelum です","Selalu memakai な","Tidak bisa berdiri sendiri","Hanya untuk benda"],a:0,note:"Contoh: 大きい (besar), 小さい (kecil), 暑い (panas)."},
+{t:"fill",s:"この本は 大きい ___。",o:["です","ます","でした","する"],a:0,note:"Kata sifat-i + です. "},
+{t:"mc",q:"Bentuk negatif sopan dari “暑いです” adalah…",o:["暑くないです","暑いません","暑いないです","暑くです"],a:0,note:"い → くないです. Contoh: 高い → 高くないです. "},
+{t:"fill",s:"今日は 寒く ___です。",o:["ない","ありません","ました","ません"],a:0,note:"寒くないです = tidak dingin. "},
+{t:"mc",q:"Kata kerja golongan 1 (godan) contohnya…",o:["書く・読む・会う","食べる・見る・寝る","する・来る","勉強する"],a:0,note:"Golongan 1 berakhiran -u (く, む, う…). Bentuk ます: 書きます, 読みます. "},
+{t:"mc",q:"Kata kerja golongan 2 (ichidan) cirinya…",o:["Berakhiran -iru / -eru dan ます-nya -ます langsung dari dasar","Selalu memakai する","Berakhiran く","Tidak punya bentuk ます"],a:0,note:"Contoh: 食べる → 食べます, 見る → 見ます, 寝る → 寝ます. "},
+{t:"fill",s:"食べる → 食べ ___。",o:["ます","です","でした","する"],a:0,note:"Golongan 2: hapus る, tambah ます. "},
+{t:"fill",s:"書く → 書き ___。",o:["ます","です","でした","する"],a:0,note:"Golongan 1: ubah く → き, tambah ます. "},
+{t:"mc",q:"Golongan 3 (tidak beraturan) isinya…",o:["する dan 来る","行く dan 来る","書く dan 読む","食べる dan 見る"],a:0,note:"する → します, 来る → 来ます (きます). Hanya dua ini. "},
+{t:"arrange",w:["この","映画","は","おもしろい","です"],note:"“おもしろい” = menarik. Kata sifat-i sebelum です."}]
+};
+
+/* ================= DATA: DAFTAR PELAJARAN (19 pelajaran, berurutan & terkunci) ================= */
+const LESSONS=[
+{id:"h1",track:"Hiragana",icon:"あ",title:"Hiragana 1 — あ行・か行",desc:"Huruf a i u e o dan ka ki ku ke ko",kind:"kana",script:"h",set:HIRA.slice(0,10)},
+{id:"h2",track:"Hiragana",icon:"さ",title:"Hiragana 2 — さ行・た行",desc:"Huruf sa shi su se so dan ta chi tsu te to",kind:"kana",script:"h",set:HIRA.slice(10,20)},
+{id:"h3",track:"Hiragana",icon:"な",title:"Hiragana 3 — な行・は行",desc:"Huruf na ni nu ne no dan ha hi fu he ho",kind:"kana",script:"h",set:HIRA.slice(20,30)},
+{id:"h4",track:"Hiragana",icon:"ま",title:"Hiragana 4 — ま行・や行・ら行・わ行",desc:"Huruf ma mi mu me mo, ya yu yo, ra ri ru re ro, wa wo, n",kind:"kana",script:"h",set:HIRA.slice(30,46)},
+{id:"h5",track:"Hiragana",icon:"が",title:"Hiragana 5 — Dakuten & ulasan",desc:"がざだばぱ dan ulasan semua hiragana",kind:"kana",script:"h",set:HIRA_DAKU},
+{id:"k1",track:"Katakana",icon:"ア",title:"Katakana 1 — ア行・カ行",desc:"Huruf a i u e o dan ka ki ku ke ko",kind:"kana",script:"k",set:KATA.slice(0,10)},
+{id:"k2",track:"Katakana",icon:"サ",title:"Katakana 2 — サ行・タ行",desc:"Huruf sa shi su se so dan ta chi tsu te to",kind:"kana",script:"k",set:KATA.slice(10,20)},
+{id:"k3",track:"Katakana",icon:"ナ",title:"Katakana 3 — ナ行・ハ行",desc:"Huruf na ni nu ne no dan ha hi fu he ho",kind:"kana",script:"k",set:KATA.slice(20,30)},
+{id:"k4",track:"Katakana",icon:"マ",title:"Katakana 4 — マ行・ヤ行・ラ行・ワ行",desc:"Huruf ma mi mu me mo, ya yu yo, ra ri ru re ro, wa wo, n",kind:"kana",script:"k",set:KATA.slice(30,46)},
+{id:"k5",track:"Katakana",icon:"ガ",title:"Katakana 5 — Dakuten & ulasan",desc:"ガザダバパ dan ulasan semua katakana",kind:"kana",script:"k",set:KATA_DAKU},
+{id:"v1",track:"Kosakata N5",icon:"👋",title:"Kosakata 1 — Sapaan & angka",desc:"20 kata: sapaan dasar dan angka 1–10000",kind:"vocab",cats:["sapaan","angka"]},
+{id:"v2",track:"Kosakata N5",icon:"🕐",title:"Kosakata 2 — Waktu & keluarga",desc:"Waktu, hari, dan anggota keluarga",kind:"vocab",cats:["waktu","keluarga"]},
+{id:"v3",track:"Kosakata N5",icon:"🍜",title:"Kosakata 3 — Makanan & perjalanan",desc:"Makanan, minuman, bandara, dan arah",kind:"vocab",cats:["makanan","perjalanan"]},
+{id:"v4",track:"Kosakata N5",icon:"🏨",title:"Kosakata 4 — Hotel, restoran & tempat",desc:"Hotel, restoran, tempat, dan alam",kind:"vocab",cats:["hotel","restoran","tempat"]},
+{id:"v5",track:"Kosakata N5",icon:"🏃",title:"Kosakata 5 — Kata kerja, sifat & benda",desc:"Kata kerja N5, kata sifat, dan benda sehari-hari",kind:"vocab",cats:["kerja","sifat","benda"]},
+{id:"g1",track:"Tata bahasa",icon:"📝",title:"Tata bahasa 1 — です / ます",desc:"Kalimat sopan: kata benda + です, kata kerja + ます",kind:"grammar",gid:"g1",intro:"Dalam bahasa Jepang sopan, kalimat diakhiri <b>です</b> (untuk kata benda / kata sifat) atau <b>ます</b> (untuk kata kerja). Contoh: わたしはダニエルです (Saya adalah Daniel), 本を読みます (Saya membaca buku)."},
+{id:"g2",track:"Tata bahasa",icon:"📝",title:"Tata bahasa 2 — Partikel は / が",desc:"は menandai topik, が menandai subjek",kind:"grammar",gid:"g2",intro:"<b>は</b> (dibaca “wa”) menandai <b>topik</b> — hal yang sedang dibicarakan. <b>が</b> menandai <b>subjek</b>, sering untuk hal baru atau penekanan. Contoh: わたしは学生です (topik: saya) — だれが来ましたか (subjek: siapa)."},
+{id:"g3",track:"Tata bahasa",icon:"📝",title:"Tata bahasa 3 — Partikel を / に / で",desc:"を = objek, に = tujuan, で = tempat kegiatan",kind:"grammar",gid:"g3",intro:"<b>を</b> (dibaca “o”) menandai objek: 本を読みます. <b>に</b> menandai tujuan: 学校に行きます. <b>で</b> menandai tempat kegiatan: 家で勉強します."},
+{id:"g4",track:"Tata bahasa",icon:"📝",title:"Tata bahasa 4 — Kata sifat-i & golongan kerja",desc:"Kata sifat berakhiran い, dan 3 golongan kata kerja",kind:"grammar",gid:"g4",intro:"Kata sifat-i berakhiran <b>い</b>: 大きい, 暑い. Negatifnya: い → <b>くないです</b> (暑くないです). Kata kerja ada 3 golongan: golongan 1 (書く→書きます), golongan 2 (食べる→食べます), golongan 3 (する→します, 来る→来ます)."}
+];
+/* ================= UTIL ================= */
+const $=s=>document.querySelector(s);
+const $$=s=>Array.from(document.querySelectorAll(s));
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function sample(a,n){return shuffle(a).slice(0,Math.min(n,a.length));}
+function normR(s){return String(s).toLowerCase().replace(/[\s']/g,"");}
+const HAS_JP=/[\u3040-\u30ff\u4e00-\u9faf]/;
+const HAS_TTS=("speechSynthesis" in window);
+function speak(text,lang){try{if(!HAS_TTS)return;const u=new SpeechSynthesisUtterance(text);u.lang=lang;u.rate=0.9;window.speechSynthesis.cancel();window.speechSynthesis.speak(u);}catch(e){}}
+function speakBtn(text,lang){return HAS_TTS?'<button class="speak" data-speak="'+esc(text)+'" data-lang="'+lang+'">🔊 Dengar</button>':"";}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-speak]");if(b)speak(b.getAttribute("data-speak"),b.getAttribute("data-lang"));});
+/* ================= LOCAL STORAGE ================= */
+function lsGet(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+let favs=lsGet("tbo_fav",[]);
+let recents=lsGet("tbo_recent",[]);
+let prog=lsGet("tbo_prog_v1",{xp:0,streak:0,lastDay:"",done:{}});
+function saveProg(){lsSet("tbo_prog_v1",prog);}
+function todayStr(){const d=new Date();return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();}
+function bumpStreak(){const t=todayStr();if(prog.lastDay===t)return;const y=new Date();y.setDate(y.getDate()-1);const ys=y.getFullYear()+"-"+(y.getMonth()+1)+"-"+y.getDate();prog.streak=(prog.lastDay===ys)?prog.streak+1:1;prog.lastDay=t;saveProg();}
+function levelOf(xp){return Math.floor(xp/100)+1;}
+/* ================= STATS HEADER ================= */
+function updateStats(){
+  $("#statXp").textContent=prog.xp;
+  $("#statLevel").textContent="Lv "+levelOf(prog.xp);
+  $("#statStreak").textContent="🔥 "+prog.streak;
+  const doneN=Object.keys(prog.done).length;
+  $("#statDone").textContent=doneN+"/"+LESSONS.length;
+  $("#lvlNum").textContent=levelOf(prog.xp);
+  const into=prog.xp%100;
+  $("#lvlBar").style.width=into+"%";
+  $("#lvlXpText").textContent=into+" / 100 XP ke level "+(levelOf(prog.xp)+1);
+}
+/* ================= TABS ================= */
+$$(".tabs button").forEach(b=>b.addEventListener("click",()=>{
+  $$(".tabs button").forEach(x=>x.classList.remove("on"));b.classList.add("on");
+  $$(".tabpage").forEach(x=>x.classList.remove("on"));
+  $("#tab-"+b.getAttribute("data-tab")).classList.add("on");
+  window.scrollTo(0,0);
+}));
+/* ================= TERJEMAH ================= */
+const LANGS=[{id:"ja",name:"Jepang (日本語)"},{id:"id",name:"Indonesia"},{id:"en",name:"Inggris (English)"}];
+const srcSel=$("#srcLang"),dstSel=$("#dstLang");
+LANGS.forEach(l=>{srcSel.add(new Option(l.name,l.id));dstSel.add(new Option(l.name,l.id));});
+srcSel.value="ja";dstSel.value="id";
+$("#swapBtn").addEventListener("click",()=>{const a=srcSel.value;srcSel.value=dstSel.value;dstSel.value=a;});
+function entryText(e,lang){return lang==="ja"?e.j:(lang==="id"?e.i:e.e);}
+function findEntry(q){
+  const nq=normR(q);
+  if(!nq)return null;
+  let m=DICT.find(e=>normR(e.j)===nq||normR(e.k)===nq);
+  if(m)return m;
+  m=DICT.find(e=>normR(e.r)===nq);
+  if(m)return m;
+  const lq=q.trim().toLowerCase();
+  m=DICT.find(e=>e.i.toLowerCase()===lq||e.e.toLowerCase()===lq);
+  if(m)return m;
+  m=DICT.find(e=>e.i.toLowerCase().includes(lq)||e.e.toLowerCase().includes(lq));
+  return m||null;
+}
+function detectLang(t){
+  if(HAS_JP.test(t))return "ja";
+  const lq=t.trim().toLowerCase();
+  if(DICT.some(e=>e.i.toLowerCase()===lq))return "id";
+  if(DICT.some(e=>e.e.toLowerCase()===lq))return "en";
+  return srcSel.value;
+}
+function segmentJP(t){
+  const keys=DICT.map(e=>e.j).concat(DICT.map(e=>e.k)).sort((a,b)=>b.length-a.length);
+  const out=[];let i=0;
+  while(i<t.length){
+    let hit=null;
+    for(const k of keys){if(t.startsWith(k,i)){hit=k;break;}}
+    if(hit){out.push(hit);i+=hit.length;}else{out.push(t[i]);i++;}
+  }
+  return out;
+}
+function wordCard(e,showFav){
+  const fav=favs.includes(e.j);
+  return '<div class="word"><div class="ja">'+esc(e.j)+speakBtn(e.j,"ja-JP")+'</div><div class="rm">'+esc(e.k)+' • '+esc(e.r)+'</div><div class="tr">🇮🇩 <b>'+esc(e.i)+'</b><br>🇬🇧 '+esc(e.e)+'</div><div class="note">'+esc(CATS[e.c]||"")+'</div>'+(showFav?'<div class="acts"><button class="mini favbtn" data-j="'+esc(e.j)+'">'+(fav?"⭐ Favorit":"☆ Simpan favorit")+'</button><button class="mini copybtn" data-copy="'+esc(e.j+" — "+e.i+" — "+e.e)+'">📋 Salin</button></div>':"")+'</div>';
+}
+function pushRecent(e){
+  recents=[e.j].concat(recents.filter(x=>x!==e.j)).slice(0,8);
+  lsSet("tbo_recent",recents);renderRecentFav();
+}
+function renderRecentFav(){
+  const ro=$("#recentOut");
+  ro.innerHTML=recents.length?recents.map(j=>{const e=DICT.find(x=>x.j===j);return e?'<button class="mini recentbtn" data-j="'+esc(e.j)+'">'+esc(e.j)+' — '+esc(e.i)+'</button>':"";}).join(" "):'<p class="note">Belum ada.</p>';
+  const fo=$("#favOut");
+  fo.innerHTML=favs.length?favs.map(j=>{const e=DICT.find(x=>x.j===j);return e?'<button class="mini recentbtn" data-j="'+esc(e.j)+'">⭐ '+esc(e.j)+' — '+esc(e.i)+'</button>':"";}).join(" "):'<p class="note">Ketuk ⭐ pada sebuah kata untuk menyimpan.</p>';
+}
+document.addEventListener("click",e=>{
+  const f=e.target.closest(".favbtn");
+  if(f){const j=f.getAttribute("data-j");favs=favs.includes(j)?favs.filter(x=>x!==j):favs.concat([j]);lsSet("tbo_fav",favs);renderRecentFav();const out=$("#dictOut");if(out.dataset.last)renderDictSearch(out.dataset.last);return;}
+  const c=e.target.closest(".copybtn");
+  if(c){const t=c.getAttribute("data-copy");if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).catch(()=>{});}c.textContent="✅ Disalin";setTimeout(()=>{c.textContent="📋 Salin";},1200);return;}
+  const r=e.target.closest(".recentbtn");
+  if(r){const en=DICT.find(x=>x.j===r.getAttribute("data-j"));if(en){$("#dictOut").dataset.last=en.j;$("#dictOut").innerHTML=wordCard(en,true);$("#dictSearch").value=en.j;}}
+});
+function renderDictSearch(q){
+  const out=$("#dictOut");out.dataset.last=q;
+  if(!q.trim()){out.innerHTML="";return;}
+  const lq=q.trim().toLowerCase(),nq=normR(q);
+  const res=DICT.filter(e=>normR(e.j).includes(nq)||normR(e.k).includes(nq)||normR(e.r).includes(nq)||e.i.toLowerCase().includes(lq)||e.e.toLowerCase().includes(lq)).slice(0,12);
+  out.innerHTML=res.length?res.map(e=>wordCard(e,true)).join(""):'<p class="note">Tidak ditemukan di kamus. Coba kata lain, atau lihat tab Frasa.</p>';
+}
+$("#dictSearch").addEventListener("input",e=>renderDictSearch(e.target.value));
+$("#translateBtn").addEventListener("click",()=>{
+  const raw=$("#inputText").value.trim();
+  const out=$("#translateOut");
+  if(!raw){out.innerHTML='<p class="note">Tulis dulu kata atau kalimatnya.</p>';return;}
+  const from=detectLang(raw);
+  const to=dstSel.value===from?(from==="ja"?"id":"ja"):dstSel.value;
+  let tokens;
+  if(from==="ja"&&!/\s/.test(raw)){tokens=segmentJP(raw.replace(/[。、！？\s]/g,""));}
+  else{tokens=raw.split(/[\s,.;!?、。]+/).filter(Boolean);}
+  if(!tokens.length){out.innerHTML='<p class="note">Tidak ada kata yang bisa diterjemahkan.</p>';return;}
+  const parts=tokens.map(tok=>{
+    const e=findEntry(tok);
+    if(e){pushRecent(e);return {tok,e};}
+    return {tok,e:null};
+  });
+  let html='<div class="card" style="margin:0 0 8px"><div class="note">Dari '+(from==="ja"?"Jepang":from==="id"?"Indonesia":"Inggris")+' ke '+(to==="ja"?"Jepang":to==="id"?"Indonesia":"Inggris")+'</div><div style="font-size:19px;margin-top:6px">';
+  html+=parts.map(p=>p.e?esc(entryText(p.e,to)):('<span class="unknown">'+esc(p.tok)+' ?</span>')).join(" ")+'</div></div>';
+  html+=parts.map(p=>p.e?wordCard(p.e,false):'<div class="word"><div class="ja unknown">'+esc(p.tok)+'</div><div class="note">Tidak ada di kamus — coba kata lain.</div></div>').join("");
+  out.innerHTML=html;
+});
+/* ================= FRASA ================= */
+let phraseCat="sapaan";
+function renderPhraseCats(){
+  $("#phraseCats").innerHTML=Object.keys(PHRASE_CATS).map(c=>'<button class="mini '+(c===phraseCat?"on":"")+'" data-cat="'+c+'">'+esc(PHRASE_CATS[c])+'</button>').join("");
+}
+function renderPhrases(){
+  const list=PHRASES.filter(p=>p.c===phraseCat);
+  $("#phraseList").innerHTML=list.map(p=>'<div class="phrase"><div class="ja">'+esc(p.j)+speakBtn(p.j,"ja-JP")+'</div><div class="rm">'+esc(p.r)+'</div><div class="tr"><span>🇮🇩 '+esc(p.i)+'</span><span>🇬🇧 '+esc(p.e)+'</span></div><div class="acts" style="margin-top:8px;display:flex;gap:8px"><button class="mini copybtn" data-copy="'+esc(p.j+" — "+p.i+" — "+p.e)+'">📋 Salin</button></div></div>').join("");
+}
+document.addEventListener("click",e=>{
+  const c=e.target.closest("[data-cat]");
+  if(c){phraseCat=c.getAttribute("data-cat");renderPhraseCats();renderPhrases();}
+});
+renderPhraseCats();renderPhrases();renderRecentFav();updateStats();
+
+/* ================= BELAJAR ================= */
+let cur=null;
+function isUnlocked(i){return i===0||!!prog.done[LESSONS[i-1].id];}
+function renderLessons(){
+  const el=$("#lessonList");
+  el.innerHTML=LESSONS.map((L,i)=>{
+    const locked=!isUnlocked(i);
+    const done=prog.done[L.id];
+    return '<div class="lesson '+(locked?"locked":"")+'"><div class="ico">'+L.icon+'</div><div class="t"><b>'+esc(L.title)+'</b><small>'+esc(L.track)+' • '+esc(L.desc)+'</small>'+(L.intro?'<small style="color:var(--indigo)">📖 Ada penjelasan materi di awal pelajaran.</small>':"")+'</div><div class="go">'+(done?'<span class="done-badge">✅ '+done+'/10</span>':locked?'<span class="note">🔒</span>':'<button class="btn btn-ghost btn-small" data-lesson="'+L.id+'">Mulai</button>')+'</div></div>';
+  }).join("");
+}
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-lesson]");
+  if(b)startLesson(b.getAttribute("data-lesson"));
+});
+function kanaTable(script){return script==="h"?HIRA:KATA;}
+function buildQuestions(L){
+  const qs=[];
+  if(L.kind==="kana"){
+    const table=kanaTable(L.script);
+    const picks=sample(L.set,10);
+    picks.forEach((k,idx)=>{
+      if(idx%2===0){
+        const distract=sample(table.filter(x=>x[1]!==k[1]),3).map(x=>x[1]);
+        qs.push({t:"mc",kind:"kana",prompt:"Huruf ini dibaca apa?",big:k[0],opts:shuffle([k[1]].concat(distract)),ans:k[1],note:"“"+k[0]+"” dibaca “"+k[1]+"”.",speak:k[0]});
+      }else{
+        const distract=sample(table.filter(x=>x[0]!==k[0]&&x[1]!==k[1]),3).map(x=>x[0]);
+        qs.push({t:"mc",kind:"kana",prompt:"Romaji “"+k[1]+"” ditulis kana apa?",big:k[1],opts:shuffle([k[0]].concat(distract)),ans:k[0],note:"“"+k[1]+"” = “"+k[0]+"”.",speak:k[0]});
+      }
+    });
+  }else if(L.kind==="vocab"){
+    const pool=DICT.filter(e=>L.cats.includes(e.c));
+    const picks=sample(pool,9);
+    picks.forEach((w,idx)=>{
+      const mode=idx%3;
+      if(mode===0){
+        const d=sample(pool.filter(x=>x.j!==w.j),3).map(x=>x.i);
+        qs.push({t:"mc",kind:"vocab",prompt:"Apa arti kata ini?",big:w.j,sub:w.k+" • "+w.r,opts:shuffle([w.i].concat(d)),ans:w.i,note:"“"+w.j+"” ("+w.r+") = "+w.i+".",speak:w.j});
+      }else if(mode===1){
+        const d=sample(pool.filter(x=>x.j!==w.j),3).map(x=>x.j);
+        qs.push({t:"mc",kind:"vocab",prompt:"“"+w.i+"” dalam bahasa Jepang?",big:w.i,opts:shuffle([w.j].concat(d)),ans:w.j,note:"“"+w.i+"” = “"+w.j+"” ("+w.r+").",speak:w.j});
+      }else{
+        const d=sample(pool.filter(x=>x.j!==w.j),3).map(x=>x.j);
+        qs.push({t:"mc",kind:"vocab",prompt:"Romaji “"+w.r+"” ditulis apa?",big:w.r,opts:shuffle([w.j].concat(d)),ans:w.j,note:"“"+w.r+"” = “"+w.j+"” ("+w.k+").",speak:w.j});
+      }
+    });
+    const mp=sample(pool,4);
+    qs.splice(4,0,{t:"match",pairs:mp.map(w=>({a:w.j,b:w.i}))});
+  }else{
+    const bank=GRAMMAR[L.gid]||[];
+    sample(bank,10).forEach(q=>{
+      if(q.t==="mc")qs.push({t:"mc",kind:"grammar",prompt:q.q,big:"",opts:q.o,ans:q.o[q.a],note:q.note});
+      else qs.push(q);
+    });
+  }
+  return qs.slice(0,10);
+}
+function startLesson(id){
+  const L=LESSONS.find(x=>x.id===id);
+  if(!L)return;
+  cur={L:L,qs:buildQuestions(L),idx:0,hearts:3,xp:0,lostHeart:false};
+  $("#learnHome").classList.add("hidden");
+  $("#learnDone").classList.add("hidden");
+  $("#learnPlay").classList.remove("hidden");
+  $("#playTitle").textContent=L.title;
+  $("#nextQ").textContent="Lanjut";
+  $("#playSub").innerHTML=L.intro?L.intro:"";
+  $("#nextQ").disabled=true;
+  renderQ();
+}
+function renderQ(){
+  const q=cur.qs[cur.idx];
+  $("#playHearts").textContent="❤️".repeat(cur.hearts)+"🤍".repeat(3-cur.hearts);
+  $("#playScore").textContent="Soal "+(cur.idx+1)+"/10 • "+cur.xp+" XP";
+  $("#playBar").style.width=(cur.idx/10*100)+"%";
+  $("#qFeed").innerHTML="";
+  $("#nextQ").disabled=true;
+  const area=$("#qArea");
+  if(q.t==="mc"){
+    area.innerHTML='<div class="sub">'+esc(q.prompt)+(q.speak?speakBtn(q.speak,"ja-JP"):"")+'</div><div class="big">'+esc(q.big)+'</div>'+(q.sub?'<div class="sub">'+esc(q.sub)+'</div>':"")+'<div id="opts">'+q.opts.map((o,i)=>'<button class="opt" data-i="'+i+'">'+esc(o)+'</button>').join("")+'</div>';
+    area.querySelectorAll(".opt").forEach(b=>b.addEventListener("click",()=>answerMC(b,q)));
+  }else if(q.t==="fill"){
+    area.innerHTML='<div class="sub">Lengkapi kalimat ini:</div><div class="big" style="font-size:24px">'+esc(q.s)+'</div><div id="opts">'+q.o.map((o,i)=>'<button class="opt" data-i="'+i+'">'+esc(o)+'</button>').join("")+'</div>';
+    area.querySelectorAll(".opt").forEach(b=>b.addEventListener("click",()=>answerMC(b,{opts:q.o,ans:q.o[q.a],note:q.note})));
+  }else if(q.t==="arrange"){
+    const toks=shuffle(q.w);
+    area.innerHTML='<div class="sub">Susun kata-kata ini menjadi kalimat yang benar:</div><div class="arrangebox" id="abox"></div><div id="tokpool" style="display:flex;flex-wrap:wrap;gap:8px">'+toks.map((t,i)=>'<button class="tok" data-t="'+esc(t)+'">'+esc(t)+'</button>').join("")+'</div><div style="height:10px"></div><button class="btn btn-primary" id="checkArrange">Periksa</button>';
+    const abox=$("#abox");
+    area.querySelectorAll(".tok").forEach(b=>b.addEventListener("click",()=>{
+      const chip=document.createElement("button");chip.className="tok";chip.textContent=b.getAttribute("data-t");
+      chip.addEventListener("click",()=>{abox.removeChild(chip);b.disabled=false;});
+      abox.appendChild(chip);b.disabled=true;
+    }));
+    $("#checkArrange").addEventListener("click",()=>{
+      const got=Array.from(abox.children).map(c=>c.textContent);
+      if(got.length!==q.w.length){$("#qFeed").innerHTML='<p class="note">Pakai semua kata dulu.</p>';return;}
+      const ok=got.join("|")===q.w.join("|");
+      finishAnswer(ok,ok?"Benar! 🎉":"Jawaban benar: "+q.w.join(" "),q.note||"");
+      $("#checkArrange").disabled=true;
+      area.querySelectorAll(".tok").forEach(b=>b.disabled=true);
+    });
+  }else if(q.t==="match"){
+    const left=shuffle(q.pairs.map(p=>p.a)),right=shuffle(q.pairs.map(p=>p.b));
+    area.innerHTML='<div class="sub">Jodohkan kata dengan artinya — ketuk satu dari kiri, lalu pasangannya di kanan:</div><div class="matchgrid"><div id="mleft">'+left.map(a=>'<button class="matchbtn" data-v="'+esc(a)+'" data-side="l">'+esc(a)+'</button>').join("")+'</div><div id="mright">'+right.map(b=>'<button class="matchbtn" data-v="'+esc(b)+'" data-side="r">'+esc(b)+'</button>').join("")+'</div></div>';
+    let selL=null,selR=null,matched=0;
+    const pairMap={};q.pairs.forEach(p=>{pairMap[p.a]=p.b;});
+    area.querySelectorAll(".matchbtn").forEach(b=>b.addEventListener("click",()=>{
+      if(b.classList.contains("ok"))return;
+      if(b.getAttribute("data-side")==="l"){if(selL)selL.classList.remove("sel");selL=b;b.classList.add("sel");}
+      else{if(selR)selR.classList.remove("sel");selR=b;b.classList.add("sel");}
+      if(selL&&selR){
+        const lv=selL.getAttribute("data-v"),rv=selR.getAttribute("data-v");
+        if(pairMap[lv]===rv){
+          selL.classList.add("ok");selR.classList.add("ok");selL.disabled=true;selR.disabled=true;
+          selL.classList.remove("sel");selR.classList.remove("sel");selL=null;selR=null;matched++;
+          if(matched===q.pairs.length){finishAnswer(true,"Semua pasangan benar! 🎉","");}
+        }else{
+          selL.classList.add("bad");selR.classList.add("bad");
+          const a=selL,c=selR;selL=null;selR=null;
+          setTimeout(()=>{a.classList.remove("bad","sel");c.classList.remove("bad","sel");},700);
+        }
+      }
+    }));
+  }
+}
+function answerMC(btn,q){
+  const chosen=q.opts[parseInt(btn.getAttribute("data-i"),10)];
+  const ok=chosen===q.ans;
+  finishAnswer(ok,ok?"Benar! 🎉":"Jawaban benar: "+q.ans,q.note||"");
+  const area=$("#qArea");
+  area.querySelectorAll(".opt").forEach(b=>{
+    b.disabled=true;
+    if(b.textContent.trim()===q.ans)b.classList.add("correct");
+    if(b===btn&&!ok)b.classList.add("wrong");
+  });
+}
+function finishAnswer(ok,msg,note){
+  if(ok){cur.xp+=10;prog.xp+=10;saveProg();updateStats();}
+  else{cur.hearts--;cur.lostHeart=true;$("#playHearts").textContent="❤️".repeat(Math.max(cur.hearts,0))+"🤍".repeat(3-Math.max(cur.hearts,0));}
+  $("#qFeed").innerHTML='<div class="card" style="margin:0;border-color:'+(ok?"var(--green)":"var(--red)")+'"><b style="color:'+(ok?"var(--green)":"var(--red)")+'">'+esc(msg)+'</b>'+(note?'<p class="note" style="margin-top:4px">'+esc(note)+'</p>':"")+'</div>';
+  $("#nextQ").disabled=false;
+  if(!ok&&cur.hearts<=0){$("#nextQ").textContent="Lihat hasil";}
+}
+$("#nextQ").addEventListener("click",()=>{
+  if(cur.hearts<=0){endLesson(false);return;}
+  cur.idx++;
+  if(cur.idx>=cur.qs.length){endLesson(true);return;}
+  $("#nextQ").textContent="Lanjut";
+  renderQ();
+});
+$("#quitLesson").addEventListener("click",()=>{
+  cur=null;
+  $("#learnPlay").classList.add("hidden");
+  $("#learnHome").classList.remove("hidden");
+  renderLessons();
+});
+function endLesson(passed){
+  $("#learnPlay").classList.add("hidden");
+  const d=$("#learnDone");d.classList.remove("hidden");
+  if(passed){
+    let bonus=0;
+    if(!cur.lostHeart){bonus=20;prog.xp+=20;cur.xp+=20;saveProg();updateStats();}
+    prog.done[cur.L.id]=10;saveProg();updateStats();
+    bumpStreak();
+    $("#doneEmoji").textContent="🎉";
+    $("#doneTitle").textContent="Pelajaran selesai!";
+    $("#doneText").innerHTML="Kamu menyelesaikan <b>"+esc(cur.L.title)+"</b> dan mendapat <b>"+cur.xp+" XP</b>"+(bonus?" (termasuk bonus sempurna +20 XP)":"")+". Pelajaran berikutnya sudah terbuka. Streak harianmu: 🔥 "+prog.streak+" hari.";
+  }else{
+    $("#doneEmoji").textContent="💔";
+    $("#doneTitle").textContent="Hati habis — coba lagi";
+    $("#doneText").innerHTML="Kamu kehabisan hati di <b>"+esc(cur.L.title)+"</b>. Tidak apa-apa, ulangi saja pelajarannya — XP yang sudah didapat tetap tersimpan.";
+  }
+  renderLessons();
+}
+$("#doneBack").addEventListener("click",()=>{
+  $("#learnDone").classList.add("hidden");
+  $("#learnHome").classList.remove("hidden");
+  renderLessons();
+});
+renderLessons();
+</script>
+</body>
+</html>
