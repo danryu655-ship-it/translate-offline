@@ -91,6 +91,10 @@ button{font-family:inherit;cursor:pointer}
 .levelbar i{display:block;height:100%;background:var(--amber)}
 .speak{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font-size:13px;margin-left:8px}
 .hidden{display:none!important}
+.hubcard{cursor:pointer}
+.hubcard:active{transform:scale(.98)}
+.hubcard .go{font-size:28px;color:var(--muted);font-weight:700}
+.backrow{margin-bottom:10px}
 .lvlgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
 .lvlcard{border:1.5px solid var(--line);border-radius:14px;padding:10px 6px;text-align:center;background:#fff}
 .lvlcard.locked{opacity:.6}
@@ -209,6 +213,19 @@ h2{font-size:18px;margin-bottom:4px}
 
   <!-- ============ TAB BELAJAR ============ -->
   <section id="tab-belajar" class="tabpage">
+    <div id="belajarHub">
+      <div class="card hubcard" onclick="showBelajarSub('belajar')">
+        <div class="row"><div class="big-emoji">🎓</div><div style="flex:1"><h2 style="margin:0">Belajar</h2><p class="sub">Pelajaran N5–N1 • XP, hati &amp; streak</p></div><div class="go">›</div></div>
+      </div>
+      <div class="card hubcard" onclick="showBelajarSub('konbini')">
+        <div class="row"><div class="big-emoji">🍙</div><div style="flex:1"><h2 style="margin:0">Konbini</h2><p class="sub">Checklist makanan &amp; barang konbini Jepang</p></div><div class="go">›</div></div>
+      </div>
+      <div class="card hubcard" onclick="showBelajarSub('kuis')">
+        <div class="row"><div class="big-emoji">✏️</div><div style="flex:1"><h2 style="margin:0">Kuis</h2><p class="sub">Kuis Travel N5 • 10 soal pilihan ganda</p></div><div class="go">›</div></div>
+      </div>
+    </div>
+    <div id="sub-belajar" class="hidden">
+      <div class="backrow"><button class="btn btn-ghost btn-small" onclick="showBelajarHub()">← Kembali</button></div>
     <div id="learnHome">
       <div class="card">
         <div class="row"><div><b>Level <span id="lvlNum">1</span></b><div class="levelbar" style="margin-top:6px"><i id="lvlBar" style="width:0%"></i></div></div><div style="flex:0 0 auto;text-align:right"><span id="lvlXpText" class="note">0 / 100 XP</span></div></div>
@@ -241,21 +258,9 @@ h2{font-size:18px;margin-bottom:4px}
         <button class="btn btn-primary" id="doneBack">Kembali ke daftar</button>
       </div>
     </div>
-  </section>
-
-  <!-- ============ TAB FRASA (gabungan: frasa travel + phrasebook translate) ============ -->
-  <section id="tab-frasa" class="tabpage">
-    <div class="card">
-      <h2>🗣️ Kartu Frasa</h2>
-      <p class="sub">Ketuk frasa untuk menampilkan kartu besar — tunjukkan ke staf toko, restoran, atau orang di jalan.</p>
-      <input type="text" id="frasaSearch" placeholder="Cari: toilet, terima kasih, harga…" oninput="renderFrasa()">
-      <div class="chips" id="frasaCats"></div>
-      <div id="frasaList"></div>
     </div>
-  </section>
-
-<!-- ============ KONBINI ============ -->
-<section id="tab-konbini" class="tabpage">
+    <div id="sub-konbini" class="hidden">
+      <div class="backrow"><button class="btn btn-ghost btn-small" onclick="showBelajarHub()">← Kembali</button></div>
   <div class="card">
     <h2>🍙 Checklist Konbini</h2>
     <p class="sub">Tandai makanan &amp; barang yang sudah kamu coba di konbini Jepang. Tersimpan di HP.</p>
@@ -265,9 +270,51 @@ h2{font-size:18px;margin-bottom:4px}
     <div id="konbiniList"></div>
     <button class="btn btn-ghost btn-small" onclick="resetKonbini()">Reset checklist</button>
   </div>
-</section>
-<!-- ============ MENU ============ -->
-<section id="tab-menu" class="tabpage">
+    </div>
+    <div id="sub-kuis" class="hidden">
+      <div class="backrow"><button class="btn btn-ghost btn-small" onclick="showBelajarHub()">← Kembali</button></div>
+  <div class="card">
+    <h2>✏️ Kuis Travel N5</h2>
+    <p class="sub">10 soal pilihan ganda seputar kosakata &amp; frasa perjalanan. Skor terbaikmu: <b id="bestScore">—</b></p>
+    <div id="quizHome"><button class="btn btn-primary" onclick="startQuiz()">Mulai Kuis</button></div>
+    <div id="quizPlay" style="display:none">
+      <p class="note" id="quizProg"></p>
+      <h2 id="quizQ" style="margin:10px 0"></h2>
+      <div id="quizOpts"></div>
+      <p class="note" id="quizFeed" style="min-height:20px"></p>
+      <button class="btn btn-primary" id="quizNext" style="display:none" onclick="nextQuiz()">Soal Berikutnya</button>
+    </div>
+    <div id="quizDone" style="display:none;text-align:center">
+      <div class="score" id="quizScore"></div>
+      <p id="quizMsg" style="margin:8px 0 16px"></p>
+      <button class="btn btn-primary" onclick="startQuiz()">Main Lagi</button>
+    </div>
+  </div>
+    </div>
+  </section>
+
+  <!-- ============ TAB FRASA (gabungan: frasa travel + phrasebook translate) ============ -->
+  <section id="tab-frasa" class="tabpage">
+    <div id="frasaHub">
+      <div class="card hubcard" onclick="showFrasaSub('frasa')">
+        <div class="row"><div class="big-emoji">🗣️</div><div style="flex:1"><h2 style="margin:0">Frasa</h2><p class="sub">Kartu frasa perjalanan • ketuk untuk kartu besar</p></div><div class="go">›</div></div>
+      </div>
+      <div class="card hubcard" onclick="showFrasaSub('menu')">
+        <div class="row"><div class="big-emoji">🍜</div><div style="flex:1"><h2 style="margin:0">Menu</h2><p class="sub">Menu Decoder + Kartu Alergi &amp; Diet</p></div><div class="go">›</div></div>
+      </div>
+    </div>
+    <div id="sub-frasa" class="hidden">
+      <div class="backrow"><button class="btn btn-ghost btn-small" onclick="showFrasaHub()">← Kembali</button></div>
+    <div class="card">
+      <h2>🗣️ Kartu Frasa</h2>
+      <p class="sub">Ketuk frasa untuk menampilkan kartu besar — tunjukkan ke staf toko, restoran, atau orang di jalan.</p>
+      <input type="text" id="frasaSearch" placeholder="Cari: toilet, terima kasih, harga…" oninput="renderFrasa()">
+      <div class="chips" id="frasaCats"></div>
+      <div id="frasaList"></div>
+    </div>
+    </div>
+    <div id="sub-menu" class="hidden">
+      <div class="backrow"><button class="btn btn-ghost btn-small" onclick="showFrasaHub()">← Kembali</button></div>
   <div class="card">
     <h2>🍜 Menu Decoder</h2>
     <p class="sub">Cari kata di menu Jepang dan lihat artinya. Cocok buat yang tidak bisa baca kanji.</p>
@@ -289,27 +336,9 @@ h2{font-size:18px;margin-bottom:4px}
     </select>
     <button class="btn btn-primary" style="margin-top:12px" onclick="showAlergiCard()">Tampilkan Kartu Alergi</button>
   </div>
-</section>
-<!-- ============ KUIS ============ -->
-<section id="tab-kuis" class="tabpage">
-  <div class="card">
-    <h2>✏️ Kuis Travel N5</h2>
-    <p class="sub">10 soal pilihan ganda seputar kosakata &amp; frasa perjalanan. Skor terbaikmu: <b id="bestScore">—</b></p>
-    <div id="quizHome"><button class="btn btn-primary" onclick="startQuiz()">Mulai Kuis</button></div>
-    <div id="quizPlay" style="display:none">
-      <p class="note" id="quizProg"></p>
-      <h2 id="quizQ" style="margin:10px 0"></h2>
-      <div id="quizOpts"></div>
-      <p class="note" id="quizFeed" style="min-height:20px"></p>
-      <button class="btn btn-primary" id="quizNext" style="display:none" onclick="nextQuiz()">Soal Berikutnya</button>
     </div>
-    <div id="quizDone" style="display:none;text-align:center">
-      <div class="score" id="quizScore"></div>
-      <p id="quizMsg" style="margin:8px 0 16px"></p>
-      <button class="btn btn-primary" onclick="startQuiz()">Main Lagi</button>
-    </div>
-  </div>
-</section>
+  </section>
+
 <!-- ============ TRIP ============ -->
 <section id="tab-trip" class="tabpage">
   <div class="card">
@@ -360,9 +389,6 @@ h2{font-size:18px;margin-bottom:4px}
   <button data-tab="terjemah" class="on"><span class="ic">🔤</span>Terjemah</button>
   <button data-tab="belajar"><span class="ic">🎓</span>Belajar</button>
   <button data-tab="frasa"><span class="ic">🗣️</span>Frasa</button>
-  <button data-tab="konbini"><span class="ic">🍙</span>Konbini</button>
-  <button data-tab="menu"><span class="ic">🍜</span>Menu</button>
-  <button data-tab="kuis"><span class="ic">✏️</span>Kuis</button>
   <button data-tab="trip"><span class="ic">🗺️</span>Trip</button>
 </nav>
 <div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
@@ -1412,11 +1438,19 @@ function updateStats(){
   $("#lvlBar").style.width=into+"%";
   $("#lvlXpText").textContent=into+" / 100 XP ke level "+(levelOf(prog.xp)+1);
 }
+/* ================= HUB BELAJAR & FRASA ================= */
+function showBelajarHub(){["belajar","konbini","kuis"].forEach(s=>document.getElementById("sub-"+s).classList.add("hidden"));document.getElementById("belajarHub").classList.remove("hidden");}
+function showBelajarSub(s){document.getElementById("belajarHub").classList.add("hidden");["belajar","konbini","kuis"].forEach(x=>document.getElementById("sub-"+x).classList.toggle("hidden",x!==s));window.scrollTo(0,0);}
+function showFrasaHub(){["frasa","menu"].forEach(s=>document.getElementById("sub-"+s).classList.add("hidden"));document.getElementById("frasaHub").classList.remove("hidden");}
+function showFrasaSub(s){document.getElementById("frasaHub").classList.add("hidden");["frasa","menu"].forEach(x=>document.getElementById("sub-"+x).classList.toggle("hidden",x!==s));window.scrollTo(0,0);}
 /* ================= TABS ================= */
 $$(".tabs button").forEach(b=>b.addEventListener("click",()=>{
   $$(".tabs button").forEach(x=>x.classList.remove("on"));b.classList.add("on");
   $$(".tabpage").forEach(x=>x.classList.remove("on"));
   $("#tab-"+b.getAttribute("data-tab")).classList.add("on");
+  const _t=b.getAttribute("data-tab");
+  if(_t==="belajar")showBelajarHub();
+  if(_t==="frasa")showFrasaHub();
   window.scrollTo(0,0);
 }));
 /* ================= TERJEMAH ================= */
