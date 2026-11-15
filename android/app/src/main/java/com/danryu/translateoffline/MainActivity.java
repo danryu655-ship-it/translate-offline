@@ -2,6 +2,7 @@ package com.danryu.translateoffline;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -25,6 +26,9 @@ public class MainActivity extends Activity {
         settings.setDomStorageEnabled(true); // localStorage untuk favorit, riwayat, progres belajar
         settings.setAllowFileAccess(true);
         webView.setWebViewClient(new WebViewClient());
+        // WebChromeClient: tanpa ini alert()/confirm() di WebView tidak tampil
+        // (confirm() selalu false) — dipakai fitur Trip (simpan/hapus data).
+        webView.setWebChromeClient(new WebChromeClient());
         webView.loadUrl("file:///android_asset/index.html");
     }
 
