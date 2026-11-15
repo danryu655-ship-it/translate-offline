@@ -142,6 +142,9 @@ button{font-family:inherit;cursor:pointer}
 .modal .box .tr{font-size:19px;margin-top:10px;font-weight:700}
 .modal .box .hint{font-size:12px;color:var(--muted);margin-top:14px}
 .modal .box .btn{margin-top:18px}
+.modal .box .btn-ghost{width:100%}
+#speakBtn.speaking{background:#7c3aed}
+.speak.speaking{background:#eef2ff;border-color:var(--indigo);color:var(--indigo)}
 .qopt{display:block;width:100%;text-align:left;border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:13px 14px;font-size:16px;margin-bottom:8px}
 .qopt.ok{background:#dcfce7;border-color:var(--green)}
 .qopt.bad{background:#fee2e2;border-color:var(--red)}
@@ -392,7 +395,7 @@ h2{font-size:18px;margin-bottom:4px}
   <button data-tab="trip"><span class="ic">🗺️</span>Trip</button>
 </nav>
 <div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
-  <div class="box"><div class="big" id="mBig"></div><div class="rm" id="mRm"></div><div class="tr" id="mTr"></div><div class="hint" id="mHint"></div><button class="btn btn-primary" onclick="closeModal()">Tutup</button></div>
+  <div class="box"><div class="big" id="mBig"></div><div class="rm" id="mRm"></div><div class="tr" id="mTr"></div><div class="hint" id="mHint"></div><button class="btn btn-primary" id="speakBtn" onclick="speakModal()">🔊 Dengarkan</button><button class="btn btn-ghost" onclick="closeModal()">Tutup</button><div class="hint" id="speakMsg"></div></div>
 </div>
 <script>
 "use strict";
@@ -1413,9 +1416,61 @@ function sample(a,n){return shuffle(a).slice(0,Math.min(n,a.length));}
 function normR(s){return String(s).toLowerCase().replace(/[\s']/g,"");}
 const HAS_JP=/[\u3040-\u30ff\u4e00-\u9faf]/;
 const HAS_TTS=("speechSynthesis" in window);
-function speak(text,lang){try{if(!HAS_TTS)return;const u=new SpeechSynthesisUtterance(text);u.lang=lang;u.rate=0.9;window.speechSynthesis.cancel();window.speechSynthesis.speak(u);}catch(e){}}
-function speakBtn(text,lang){return HAS_TTS?'<button class="speak" data-speak="'+esc(text)+'" data-lang="'+lang+'">🔊 Dengar</button>':"";}
-document.addEventListener("click",e=>{const b=e.target.closest("[data-speak]");if(b)speak(b.getAttribute("data-speak"),b.getAttribute("data-lang"));});
+/* ===== SUARA (TTS): Web Speech API ja-JP dulu, cadangan Google TTS online ===== */
+let _spkOn=false,_spkTxt="",_spkEl=null,_gtts=null,_gttsParts=[],_gttsI=0;
+function _spkUI(on){if(_spkEl){_spkEl.classList.toggle("speaking",on);if(_spkEl.id==="speakBtn")_spkEl.textContent=on?"\u23f9 Berhenti":"\uD83D\uDD0A Dengarkan";}if(!on)_spkEl=null;}
+function stopSpeak(){try{if(HAS_TTS)speechSynthesis.cancel();}catch(e){}if(_gtts){try{_gtts.pause();}catch(e){}_gtts=null;}_gttsParts=[];_spkOn=false;_spkUI(false);}
+function _spkMsg(t){var m=document.getElementById("speakMsg");if(m)m.textContent=t||"";}
+function _spkNative(text,lang){
+  var vs=speechSynthesis.getVoices();
+  var pref=vs.filter(function(v){return v.lang&&v.lang.toLowerCase().indexOf(lang.slice(0,2))===0;});
+  if(!pref.length)return false;
+  var u=new SpeechSynthesisUtterance(text);
+  u.lang=lang;u.voice=pref[0];u.rate=0.9;
+  u.onend=function(){_spkOn=false;_spkUI(false);};
+  u.onerror=function(){_spkOn=false;_spkUI(false);};
+  try{speechSynthesis.cancel();}catch(e){}
+  speechSynthesis.speak(u);_spkOn=true;return true;
+}
+function _spkGtts(text){
+  _gttsParts=text.split(/\n+/).map(function(s){return s.trim();}).filter(Boolean);
+  _gttsI=0;_playGtts();
+}
+function _playGtts(){
+  if(_gttsI>=_gttsParts.length){_spkOn=false;_spkUI(false);return;}
+  var a=new Audio("https://translate.google.com/translate_tts?ie=UTF-8&q="+encodeURIComponent(_gttsParts[_gttsI])+"&tl=ja&client=gtx");
+  _gtts=a;
+  a.onended=function(){_gttsI++;_playGtts();};
+  a.onerror=function(){_spkOn=false;_spkUI(false);_spkMsg("Tidak bisa memutar suara \u2014 periksa koneksi internet.");};
+  var p=a.play();if(p&&p.catch)p.catch(function(){_spkOn=false;_spkUI(false);_spkMsg("Tidak bisa memutar suara \u2014 periksa koneksi internet.");});
+}
+function _spkFallback(text,lang){
+  if(lang.slice(0,2)!=="ja"||(typeof forceOffline!=="undefined"&&forceOffline)){
+    _spkMsg("Suara Jepang belum terpasang di HP \u2014 aktifkan Google Text-to-Speech bahasa Jepang di pengaturan HP, atau matikan mode Paksa offline.");
+    _spkEl=null;return;
+  }
+  _spkOn=true;_spkUI(true);_spkGtts(text);
+}
+function speak(text,lang,el){
+  text=(text||"").trim();if(!text)return;
+  lang=lang||"ja-JP";
+  if(_spkOn&&_spkTxt===text){stopSpeak();return;}
+  stopSpeak();_spkTxt=text;_spkEl=el||null;_spkMsg("");
+  if(HAS_TTS){
+    if(_spkNative(text,lang)){_spkUI(true);return;}
+    if(speechSynthesis.getVoices().length===0){
+      var done=false;
+      var later=function(){if(done)return;done=true;if(_spkNative(text,lang))_spkUI(true);else _spkFallback(text,lang);};
+      try{speechSynthesis.addEventListener("voiceschanged",later);}catch(e){try{speechSynthesis.onvoiceschanged=later;}catch(e2){}}
+      setTimeout(later,1500);
+      return;
+    }
+    _spkFallback(text,lang);return;
+  }
+  _spkFallback(text,lang);
+}
+function speakBtn(text,lang){return '<button class="speak" data-speak="'+esc(text)+'" data-lang="'+lang+'">\uD83D\uDD0A Dengar</button>';}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-speak]");if(b)speak(b.getAttribute("data-speak"),b.getAttribute("data-lang"),b);});
 /* ================= LOCAL STORAGE ================= */
 function lsGet(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
@@ -1612,7 +1667,8 @@ function openModal(big,rm,tr,hint){
   document.getElementById("mBig").textContent=big;document.getElementById("mRm").textContent=rm;document.getElementById("mTr").textContent=tr;document.getElementById("mHint").textContent=hint||"";
   document.getElementById("modal").classList.add("on");
 }
-function closeModal(){document.getElementById("modal").classList.remove("on")}
+function closeModal(){stopSpeak();document.getElementById("modal").classList.remove("on")}
+function speakModal(){speak(document.getElementById("mBig").textContent,"ja-JP",document.getElementById("speakBtn"));}
 
 let frasaCat="Semua";
 function renderFrasaCats(){
@@ -1622,7 +1678,7 @@ function renderFrasaCats(){
 function renderFrasa(){
   const q=(document.getElementById("frasaSearch").value||"").toLowerCase();
   const list=FRASA.filter(f=>(frasaCat==="Semua"||f.c===frasaCat)&&(!q||f.ja.includes(q)||f.rm.toLowerCase().includes(q)||f.id.toLowerCase().includes(q)));
-  document.getElementById("frasaList").innerHTML=list.length?list.map((f,i)=>`<div class="item" onclick="openModal('${f.ja}','${f.rm}','${f.id}','${f.en?("🇬🇧 "+f.en):"Ketuk di luar kartu atau tombol Tutup untuk kembali"}')"><div class="ja">${f.ja}</div><div class="rm">${f.rm}</div><div class="tr">${f.id}</div><span class="tag">${f.c}</span></div>`).join(""):`<p class="note">Tidak ada frasa yang cocok. Coba kata lain.</p>`;
+  document.getElementById("frasaList").innerHTML=list.length?list.map((f,i)=>`<div class="item" onclick="openModal('${f.ja}','${f.rm}','${f.id}','${f.en?("🇬🇧 "+f.en):"Ketuk di luar kartu atau tombol Tutup untuk kembali"}')"><div class="ja">${f.ja}</div><div class="rm">${f.rm}</div><div class="tr">${f.id}</div><span class="tag">${f.c}</span><button class="speak" onclick="event.stopPropagation();speak('${f.ja}','ja-JP',this)">\uD83D\uDD0A</button></div>`).join(""):`<p class="note">Tidak ada frasa yang cocok. Coba kata lain.</p>`;
 }
 /* ===== KONBINI ===== */
 let konbiniCat="Semua";
