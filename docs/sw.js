@@ -1,7 +1,7 @@
 /* Service worker Nihongo Santai PWA — cache-first (stale-while-revalidate).
    Aplikasi ini satu file HTML mandiri + manifest + ikon, jadi semuanya bisa
    di-cache dan dipakai offline setelah kunjungan pertama. */
-const CACHE = 'nihongo-santai-v2';
+const CACHE = 'nihongo-santai-v3';
 const ASSETS = [
   './',
   './index.html',
