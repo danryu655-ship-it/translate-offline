@@ -162,6 +162,15 @@ button{font-family:inherit;cursor:pointer}
 h2{font-size:18px;margin-bottom:4px}
 .sub{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:10px}
 
+@media print{
+  header,.tabs,.btn,.del,input,select,textarea,.modal,#splash{display:none!important}
+  body{background:#fff}
+  .tabpage{display:none!important}
+  #tab-trip{display:block!important}
+  #printHead{display:block!important}
+  .card{box-shadow:none;border:1px solid #bbb;break-inside:avoid;margin-bottom:10px}
+}
+#printHead{display:none}
 </style>
 </head>
 <body>
@@ -350,6 +359,7 @@ h2{font-size:18px;margin-bottom:4px}
 
 <!-- ============ TRIP ============ -->
 <section id="tab-trip" class="tabpage">
+  <div id="printHead"><h2>🗺️ Rencana Trip — Nihongo Santai</h2><p class="sub">Dicetak dari aplikasi Nihongo Santai</p></div>
   <div class="card">
     <h2>🗺️ Perencana Trip</h2>
     <p class="sub">Rencanakan perjalananmu. Semua tersimpan di HP, bisa diubah kapan saja.</p>
@@ -374,6 +384,55 @@ h2{font-size:18px;margin-bottom:4px}
     <div id="tripSummary" style="margin-top:12px"></div>
   </div>
   <div class="card">
+    <h2>📅 Itinerary Harian</h2>
+    <p class="sub">Susun jadwal tiap hari: jam dan kegiatan. Pakai template untuk mengisi cepat.</p>
+    <div class="row">
+      <div><label>Hari ke-</label><select id="itinDay"></select></div>
+      <div><label>Jam</label><input type="time" id="itinTime" value="09:00"></div>
+    </div>
+    <label style="margin-top:10px">Kegiatan</label>
+    <input type="text" id="itinText" placeholder="Contoh: Kuil Senso-ji di Asakusa">
+    <div class="row" style="margin-top:10px">
+      <button class="btn btn-ghost btn-small" onclick="addItin()">+ Tambah Jadwal</button>
+      <button class="btn btn-ghost btn-small" id="tplBtn" onclick="applyTemplate()">📋 Pakai Template</button>
+    </div>
+    <div id="itinList" style="margin-top:10px"></div>
+  </div>
+  <div class="card">
+    <h2>✈️ Info Penerbangan</h2>
+    <p class="sub">Catat penerbanganmu (diisi manual, tanpa pelacakan live).</p>
+    <div class="row">
+      <div><label>Maskapai</label><input type="text" id="flAirline" placeholder="Contoh: Garuda Indonesia"></div>
+      <div><label>Nomor penerbangan</label><input type="text" id="flNum" placeholder="Contoh: GA-876"></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div><label>Tanggal</label><input type="date" id="flDate"></div>
+      <div><label>Jam berangkat</label><input type="time" id="flDepTime"></div>
+      <div><label>Jam tiba</label><input type="time" id="flArrTime"></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div><label>Bandara berangkat</label><input type="text" id="flDep" placeholder="Contoh: CGK"></div>
+      <div><label>Bandara tiba</label><input type="text" id="flArr" placeholder="Contoh: HND"></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn btn-ghost btn-small" onclick="saveFlight()">Simpan Penerbangan</button>
+      <button class="btn btn-ghost btn-small" onclick="clearFlight()">Hapus</button>
+    </div>
+    <div id="flightSummary" style="margin-top:10px"></div>
+  </div>
+  <div class="card">
+    <h2>📄 Dokumen &amp; Tiket</h2>
+    <p class="sub">Simpan nomor booking / kode konfirmasi tiket, hotel, dan atraksi di satu tempat.</p>
+    <div class="row">
+      <div><label>Jenis dokumen</label><select id="docType"><option>Tiket pesawat</option><option>Hotel</option><option>Tiket atraksi</option><option>Transport</option><option>Lainnya</option></select></div>
+      <div><label>Kode konfirmasi</label><input type="text" id="docCode" placeholder="Contoh: ABC123"></div>
+    </div>
+    <label style="margin-top:10px">Catatan</label>
+    <input type="text" id="docNote" placeholder="Contoh: Check-in jam 15:00">
+    <button class="btn btn-ghost btn-small" style="margin-top:10px" onclick="addDoc()">+ Tambah Dokumen</button>
+    <div id="docList" style="margin-top:10px"></div>
+  </div>
+  <div class="card">
     <h2>🎒 Packing Checklist</h2>
     <p class="sub">Barang bawaan wajib sebelum berangkat.</p>
     <div id="packList"></div>
@@ -390,6 +449,17 @@ h2{font-size:18px;margin-bottom:4px}
     <div class="row"><input type="text" id="expName" placeholder="Contoh: Tiket kereta"><input type="number" id="expAmt" placeholder="JPY" min="0" style="flex:0 0 110px"><button class="btn btn-ghost btn-small" style="flex:0 0 auto" onclick="addExp()">+ Tambah</button></div>
     <div id="expList" style="margin-top:10px"></div>
     <p class="sum" id="expSummary" style="margin-top:10px"></p>
+  </div>
+  <div class="card">
+    <h2>👥 Bagi Biaya</h2>
+    <p class="sub">Jalan bareng? Bagi total pengeluaran dengan jumlah orang yang patungan.</p>
+    <div class="row"><div><label>Jumlah orang</label><input type="number" id="splitPeople" min="1" max="50" value="1"></div><button class="btn btn-ghost btn-small" style="flex:0 0 auto" onclick="saveSplit()">Hitung</button></div>
+    <p class="sum" id="splitSummary" style="margin-top:10px"></p>
+  </div>
+  <div class="card">
+    <h2>🖨️ Ekspor PDF</h2>
+    <p class="sub">Cetak rencana trip (kota, itinerary, penerbangan, pengeluaran, packing, wishlist) sebagai PDF rapi untuk dibawa offline.</p>
+    <button class="btn btn-primary" onclick="exportTripPDF()">🖨️ Ekspor / Cetak PDF</button>
   </div>
 <div class="card"><p class="note" style="text-align:center">Dibuat untuk <b>Nihongo Santai</b> — konten level N5. Semua data tersimpan di HP, tanpa internet, tanpa akun. Selamat jalan! いってらっしゃい (itterasshai).</p></div>
 </section>
@@ -1784,7 +1854,7 @@ let exps=ls("nst_exp_v1",[]);
 function fmtJPY(n){return "¥"+Number(n||0).toLocaleString("id-ID")}
 function loadTrip(){
   document.getElementById("tripCity").value=trip.city;document.getElementById("tripDays").value=trip.days;document.getElementById("tripBudget").value=trip.budget;document.getElementById("tripNote").value=trip.note||"";
-  renderTripSummary();renderPack();renderWish();renderExp();
+  renderTripSummary();renderPack();renderWish();renderExp();renderItin();loadFlight();renderDocs();renderSplit();
 }
 function saveTrip(){
   trip={city:document.getElementById("tripCity").value,days:Math.max(1,Math.min(14,+(document.getElementById("tripDays").value||3))),budget:Math.max(0,+(document.getElementById("tripBudget").value||0)),note:document.getElementById("tripNote").value||""};
@@ -1816,6 +1886,7 @@ function renderExp(){
   const total=exps.reduce((s,e)=>s+(+e.amt||0),0);
   const sisa=(+trip.budget||0)-total;
   document.getElementById("expSummary").innerHTML=`Total keluar: <b>${fmtJPY(total)}</b> • Budget: <b>${fmtJPY(trip.budget)}</b> • Sisa: <b style="color:${sisa<0?"var(--red)":"var(--green)"}">${fmtJPY(sisa)}</b>`;
+  renderSplit();
 }
 function addExp(){
   const n=document.getElementById("expName").value.trim(),a=+(document.getElementById("expAmt").value||0);
@@ -1823,6 +1894,180 @@ function addExp(){
   exps.push({name:n,amt:a});sv("nst_exp_v1",exps);document.getElementById("expName").value="";document.getElementById("expAmt").value="";renderExp();
 }
 function delExp(i){exps.splice(i,1);sv("nst_exp_v1",exps);renderExp();}
+/* ===== TRIP BARU: itinerary, penerbangan, dokumen, bagi biaya, ekspor PDF ===== */
+let itin=ls("nst_itin_v1",[]);
+let flight=ls("nst_flight_v1",{airline:"",num:"",date:"",depTime:"",arrTime:"",dep:"",arr:""});
+let docs=ls("nst_docs_v1",[]);
+let splitPeople=ls("nst_split_v1",1);
+/* Template itinerary per kota — konten sendiri, rencana sederhana tempat umum */
+const TPL={
+"Tokyo|東京":{items:[
+ {d:1,t:"09:00",x:"Asakusa & Kuil Senso-ji"},
+ {d:1,t:"12:00",x:"Makan siang di Nakamise"},
+ {d:1,t:"15:00",x:"Tokyo Skytree"},
+ {d:1,t:"18:00",x:"Jalan-jalan di Akihabara"},
+ {d:2,t:"09:00",x:"Shibuya & patung Hachiko"},
+ {d:2,t:"11:00",x:"Harajuku & Takeshita-dori"},
+ {d:2,t:"15:00",x:"Taman Shinjuku Gyoen"},
+ {d:2,t:"18:00",x:"Makan malam di Shinjuku"},
+ {d:3,t:"09:00",x:"Pasar Toyosu / Tsukiji"},
+ {d:3,t:"12:00",x:"Ginza"},
+ {d:3,t:"15:00",x:"Museum / TeamLab"},
+ {d:3,t:"18:00",x:"Menara Tokyo"}]},
+"Kyoto|京都":{items:[
+ {d:1,t:"09:00",x:"Kuil Kiyomizu-dera"},
+ {d:1,t:"12:00",x:"Jalan Sannenzaka"},
+ {d:1,t:"15:00",x:"Kuil Yasaka"},
+ {d:1,t:"18:00",x:"Gion"},
+ {d:2,t:"09:00",x:"Arashiyama & hutan bambu"},
+ {d:2,t:"12:00",x:"Kuil Tenryu-ji"},
+ {d:2,t:"15:00",x:"Kereta Sagano"},
+ {d:2,t:"17:00",x:"Jembatan Togetsukyo"},
+ {d:3,t:"09:00",x:"Kuil Fushimi Inari (gerbang torii)"},
+ {d:3,t:"12:00",x:"Uji — coba matcha"},
+ {d:3,t:"15:00",x:"Istana Nijo"},
+ {d:3,t:"18:00",x:"Sungai Kamo"}]},
+"Osaka|大阪":{items:[
+ {d:1,t:"09:00",x:"Istana Osaka"},
+ {d:1,t:"12:00",x:"Dotonbori"},
+ {d:1,t:"15:00",x:"Shinsaibashi"},
+ {d:1,t:"18:00",x:"Kuliner Dotonbori"},
+ {d:2,t:"09:00",x:"Kuil Sumiyoshi Taisha"},
+ {d:2,t:"12:00",x:"Pasar Kuromon"},
+ {d:2,t:"15:00",x:"Umeda Sky Building"},
+ {d:2,t:"18:00",x:"Shinsekai"}]},
+"Nara|奈良":{items:[
+ {d:1,t:"09:00",x:"Taman Nara & rusa"},
+ {d:1,t:"12:00",x:"Kuil Todai-ji"},
+ {d:1,t:"15:00",x:"Kuil Kasuga Taisha"},
+ {d:1,t:"17:00",x:"Jalan-jalan Naramachi"},
+ {d:2,t:"09:00",x:"Kuil Horyu-ji"},
+ {d:2,t:"12:00",x:"Istana Heijo"},
+ {d:2,t:"15:00",x:"Gunung Wakakusa"}]},
+"Fuji / Kawaguchiko|富士山・河口湖":{items:[
+ {d:1,t:"09:00",x:"Danau Kawaguchiko"},
+ {d:1,t:"12:00",x:"Kachi Kachi Ropeway"},
+ {d:1,t:"15:00",x:"Pagoda Chureito"},
+ {d:1,t:"18:00",x:"Onsen"},
+ {d:2,t:"09:00",x:"Oshino Hakkai"},
+ {d:2,t:"12:00",x:"Danau Yamanaka"},
+ {d:2,t:"15:00",x:"Fuji-Q Highland (opsional)"}]},
+"Hiroshima|広島":{items:[
+ {d:1,t:"09:00",x:"Taman Perdamaian & Museum Bom Atom"},
+ {d:1,t:"12:00",x:"Istana Hiroshima"},
+ {d:1,t:"15:00",x:"Jalan Hondori"},
+ {d:1,t:"18:00",x:"Okonomiyaki"},
+ {d:2,t:"09:00",x:"Kapal ke Miyajima"},
+ {d:2,t:"11:00",x:"Torii terapung & Kuil Itsukushima"},
+ {d:2,t:"15:00",x:"Gunung Misen"},
+ {d:2,t:"17:00",x:"Kembali ke Hiroshima"}]},
+"Hokkaido|北海道":{items:[
+ {d:1,t:"09:00",x:"Sapporo & Menara Jam"},
+ {d:1,t:"12:00",x:"Pasar Nijo"},
+ {d:1,t:"15:00",x:"Taman Odori"},
+ {d:1,t:"18:00",x:"Ramen Sapporo"},
+ {d:2,t:"09:00",x:"Otaru & kanal"},
+ {d:2,t:"12:00",x:"Museum Kotak Musik"},
+ {d:2,t:"15:00",x:"Bukit Tenguyama"},
+ {d:2,t:"18:00",x:"Sushi Otaru"},
+ {d:3,t:"09:00",x:"Biei & kolam biru"},
+ {d:3,t:"12:00",x:"Ladang bunga Furano"},
+ {d:3,t:"15:00",x:"Onsen"},
+ {d:3,t:"18:00",x:"Kembali ke Sapporo"}]},
+"Okinawa|沖縄":{items:[
+ {d:1,t:"09:00",x:"Istana Shuri"},
+ {d:1,t:"12:00",x:"Kokusai-dori"},
+ {d:1,t:"15:00",x:"Pantai Naminoue"},
+ {d:1,t:"18:00",x:"Kuliner Okinawa"},
+ {d:2,t:"09:00",x:"Akuarium Churaumi"},
+ {d:2,t:"12:00",x:"Cape Manzamo"},
+ {d:2,t:"15:00",x:"Pantai Emerald"},
+ {d:2,t:"18:00",x:"Kembali ke Naha"},
+ {d:3,t:"09:00",x:"Pulau Zamami / snorkeling"},
+ {d:3,t:"12:00",x:"Pantai"},
+ {d:3,t:"15:00",x:"Pasar Makishi"},
+ {d:3,t:"18:00",x:"Oleh-oleh"}]}
+};
+function renderItin(){
+  const sel=document.getElementById("itinDay");
+  const cur=sel.value;
+  sel.innerHTML=Array.from({length:trip.days},(_,i)=>`<option value="${i+1}">Hari ${i+1}</option>`).join("");
+  if(cur&&+cur<=trip.days)sel.value=cur;
+  const cityName=(trip.city||"").split("|")[0];
+  document.getElementById("tplBtn").textContent="📋 Pakai Template "+cityName;
+  const list=document.getElementById("itinList");
+  if(!itin.length){list.innerHTML=`<p class="note">Belum ada jadwal. Tambah manual atau pakai template.</p>`;return;}
+  const days=[...new Set(itin.map(i=>i.day))].sort((a,b)=>a-b);
+  list.innerHTML=days.map(d=>{
+    const items=itin.map((it,idx)=>({it,idx})).filter(o=>o.it.day===d).sort((a,b)=>String(a.it.time).localeCompare(String(b.it.time)));
+    return `<div style="margin-bottom:10px"><b>📅 Hari ${d}</b>`+items.map(o=>`<div class="item" style="cursor:default"><div class="row"><span style="flex:0 0 52px"><b>${esc(o.it.time)}</b></span><span style="flex:1">${esc(o.it.text)}</span><button class="del" onclick="delItin(${o.idx})">✕</button></div></div>`).join("")+`</div>`;
+  }).join("");
+}
+function addItin(){
+  const d=+(document.getElementById("itinDay").value||1);
+  const t=document.getElementById("itinTime").value||"09:00";
+  const x=document.getElementById("itinText").value.trim();
+  if(!x){alert("Isi kegiatannya dulu.");return;}
+  itin.push({day:d,time:t,text:x});sv("nst_itin_v1",itin);
+  document.getElementById("itinText").value="";renderItin();
+}
+function delItin(i){itin.splice(i,1);sv("nst_itin_v1",itin);renderItin();}
+function applyTemplate(){
+  const tpl=TPL[trip.city];
+  if(!tpl){alert("Belum ada template untuk kota ini.");return;}
+  const filledDays=[...new Set(itin.map(i=>i.day))];
+  const tplDays=[...new Set(tpl.items.map(i=>i.d))];
+  const clash=tplDays.filter(d=>filledDays.includes(d));
+  if(clash.length&&!confirm("Hari "+clash.join(", ")+" sudah ada isinya. Template hanya mengisi hari yang masih kosong. Lanjutkan?"))return;
+  let added=0;
+  tpl.items.forEach(i=>{if(!filledDays.includes(i.d)){itin.push({day:i.d,time:i.t,text:i.x});added++;}});
+  if(added===0){alert("Semua hari template sudah terisi — tidak ada yang ditambahkan.");return;}
+  sv("nst_itin_v1",itin);renderItin();
+  alert("Template ditambahkan: "+added+" jadwal.");
+}
+const FL_FIELDS=[["flAirline","airline"],["flNum","num"],["flDate","date"],["flDepTime","depTime"],["flArrTime","arrTime"],["flDep","dep"],["flArr","arr"]];
+function loadFlight(){
+  const f=flight||{};
+  FL_FIELDS.forEach(([id,k])=>{document.getElementById(id).value=f[k]||"";});
+  renderFlight();
+}
+function saveFlight(){
+  flight={};
+  FL_FIELDS.forEach(([id,k])=>{flight[k]=document.getElementById(id).value.trim();});
+  sv("nst_flight_v1",flight);renderFlight();alert("Info penerbangan tersimpan.");
+}
+function clearFlight(){
+  if(!confirm("Hapus info penerbangan?"))return;
+  flight={airline:"",num:"",date:"",depTime:"",arrTime:"",dep:"",arr:""};
+  sv("nst_flight_v1",flight);loadFlight();
+}
+function renderFlight(){
+  const f=flight||{};
+  const has=f.airline||f.num||f.dep||f.arr;
+  document.getElementById("flightSummary").innerHTML=has
+    ?`<p class="sum">✈️ <b>${esc(f.airline||"—")} ${esc(f.num||"")}</b>${f.date?` • ${esc(f.date)}`:""}${f.depTime||f.arrTime?`<br>🕐 ${esc(f.depTime||"—")} → ${esc(f.arrTime||"—")}`:""}${f.dep||f.arr?`<br>🛫 ${esc(f.dep||"—")} → 🛬 ${esc(f.arr||"—")}`:""}</p>`
+    :`<p class="note">Belum ada info penerbangan.</p>`;
+}
+function renderDocs(){
+  document.getElementById("docList").innerHTML=docs.length?docs.map((d,i)=>`<div class="item" style="cursor:default"><div class="row"><span style="flex:1"><b>${esc(d.type)}</b> — ${esc(d.code)}${d.note?`<br><span class="note">${esc(d.note)}</span>`:""}</span><button class="del" onclick="delDoc(${i})">✕</button></div></div>`).join(""):`<p class="note">Belum ada dokumen.</p>`;
+}
+function addDoc(){
+  const t=document.getElementById("docType").value;
+  const c=document.getElementById("docCode").value.trim();
+  const n=document.getElementById("docNote").value.trim();
+  if(!c){alert("Isi kode konfirmasinya.");return;}
+  docs.push({type:t,code:c,note:n});sv("nst_docs_v1",docs);
+  document.getElementById("docCode").value="";document.getElementById("docNote").value="";renderDocs();
+}
+function delDoc(i){docs.splice(i,1);sv("nst_docs_v1",docs);renderDocs();}
+function saveSplit(){splitPeople=Math.max(1,Math.min(50,+(document.getElementById("splitPeople").value||1)));sv("nst_split_v1",splitPeople);renderSplit();}
+function renderSplit(){
+  document.getElementById("splitPeople").value=splitPeople;
+  const total=exps.reduce((s,e)=>s+(+e.amt||0),0);
+  const per=splitPeople>0?Math.round(total/splitPeople):total;
+  document.getElementById("splitSummary").innerHTML=`Total pengeluaran: <b>${fmtJPY(total)}</b> • ${splitPeople} orang<br>Per orang: <b>${fmtJPY(per)}</b>`;
+}
+function exportTripPDF(){window.print();}
 /* ===== INIT TRAVEL ===== */
 document.getElementById("bestScore").textContent=(ls("nst_quiz_best_v1",0)||"—")+(ls("nst_quiz_best_v1",0)?" / 10":"");
 renderFrasaCats();renderFrasa();renderKonbiniCats();renderKonbini();renderMenuCats();renderMenu();renderAlergi();loadTrip();
